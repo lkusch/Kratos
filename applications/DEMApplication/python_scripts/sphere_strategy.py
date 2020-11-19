@@ -630,39 +630,39 @@ class ExplicitStrategy():
 
         if not param:
             DiscontinuumConstitutiveLaw = globals().get(properties[DEM_DISCONTINUUM_CONSTITUTIVE_LAW_NAME])()
-            coefficient_of_restitution = properties[COEFFICIENT_OF_RESTITUTION]
+            # coefficient_of_restitution = properties[COEFFICIENT_OF_RESTITUTION]
 
             type_of_law = DiscontinuumConstitutiveLaw.GetTypeOfLaw()
 
-            write_gamma = False
+            # write_gamma = False
 
-            write_AlphaFunction = False
+            # write_AlphaFunction = False
 
-            if (type_of_law == 'Linear'):
-                gamma = self.RootByBisection(self.coeff_of_rest_diff, 0.0, 16.0, 0.0001, 300, coefficient_of_restitution)
-                write_gamma = True
+            # if (type_of_law == 'Linear'):
+            #     gamma = self.RootByBisection(self.coeff_of_rest_diff, 0.0, 16.0, 0.0001, 300, coefficient_of_restitution)
+            #     write_gamma = True
 
-            elif (type_of_law == 'Hertz'):
-                gamma = self.GammaForHertzThornton(coefficient_of_restitution)
-                write_gamma = True
+            # elif (type_of_law == 'Hertz'):
+            #     gamma = self.GammaForHertzThornton(coefficient_of_restitution)
+            #     write_gamma = True
 
-            elif (type_of_law == 'Conical_damage'):
-                gamma = self.GammaForHertzThornton(coefficient_of_restitution)
-                write_gamma = True
-                conical_damage_alpha = properties[CONICAL_DAMAGE_ALPHA]
-                AlphaFunction = self.SinAlphaConicalDamage(conical_damage_alpha)
-                write_AlphaFunction = True
-                if not properties.Has(LEVEL_OF_FOULING):
-                    properties[LEVEL_OF_FOULING] = 0.0
+            # elif (type_of_law == 'Conical_damage'):
+            #     gamma = self.GammaForHertzThornton(coefficient_of_restitution)
+            #     write_gamma = True
+            #     conical_damage_alpha = properties[CONICAL_DAMAGE_ALPHA]
+            #     AlphaFunction = self.SinAlphaConicalDamage(conical_damage_alpha)
+            #     write_AlphaFunction = True
+            #     if not properties.Has(LEVEL_OF_FOULING):
+            #         properties[LEVEL_OF_FOULING] = 0.0
 
-            else:
-                pass
+            # else:
+            #     pass
 
-            if write_gamma == True:
-                properties[DAMPING_GAMMA] = gamma
+            # if write_gamma == True:
+            #     properties[DAMPING_GAMMA] = gamma
 
-            if write_AlphaFunction == True:
-                properties[CONICAL_DAMAGE_ALPHA_FUNCTION] = AlphaFunction
+            # if write_AlphaFunction == True:
+            #     properties[CONICAL_DAMAGE_ALPHA_FUNCTION] = AlphaFunction
 
             if properties.Has(CLUSTER_FILE_NAME):
                 cluster_file_name = properties[CLUSTER_FILE_NAME]
@@ -674,6 +674,12 @@ class ExplicitStrategy():
                     properties.SetValue(BREAKABLE_CLUSTER, False)
 
             DiscontinuumConstitutiveLaw.SetConstitutiveLawInProperties(properties, True)
+
+        coefficient_of_restitution = properties[COEFFICIENT_OF_RESTITUTION]
+        gamma = self.GammaForHertzThornton(coefficient_of_restitution)
+        properties[DAMPING_GAMMA] = gamma
+
+        print(gamma)
 
         if properties.Has(DEM_TRANSLATIONAL_INTEGRATION_SCHEME_NAME):
             translational_scheme_name = properties[DEM_TRANSLATIONAL_INTEGRATION_SCHEME_NAME]
