@@ -183,10 +183,10 @@ template<class TGeometryType>
 void TestFastProjectOnLine3D(TGeometryType& rGeom)
 {
     // Reference: Ref: https://www.qc.edu.hk/math/Advanced%20Level/Point_to_line.htm "Method 3 Using Dot Product"
-    const Point point_to_proj(-2.0, 4.0, -3.0);
+    Point point_to_proj(-2.0, 4.0, -3.0);
     Point projected_point;
 
-    const double proj_distance = GeometricalProjectionUtilities::FastProjectOnLine(
+    double proj_distance = GeometricalProjectionUtilities::FastProjectOnLine(
         rGeom,
         point_to_proj,
         projected_point);
@@ -196,6 +196,19 @@ void TestFastProjectOnLine3D(TGeometryType& rGeom)
     const double expected_coord_x = 4.0/14.0;
     const double expected_coord_y = 27.0/14.0;
     const double expected_coord_z = -19.0/14.0;
+
+    KRATOS_CHECK_DOUBLE_EQUAL(expected_proj_dist, proj_distance);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.X(), expected_coord_x);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.Y(), expected_coord_y);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.Z(), expected_coord_z);
+
+    // Projection from the opposite side
+    point_to_proj.Coordinates() = 2*projected_point.Coordinates() - point_to_proj.Coordinates();
+
+    proj_distance = GeometricalProjectionUtilities::FastProjectOnLine(
+        rGeom,
+        point_to_proj,
+        projected_point);
 
     KRATOS_CHECK_DOUBLE_EQUAL(expected_proj_dist, proj_distance);
     KRATOS_CHECK_DOUBLE_EQUAL(projected_point.X(), expected_coord_x);
