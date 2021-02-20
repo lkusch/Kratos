@@ -95,7 +95,7 @@ void TestFastProjectDirection(const TGeometryType& rGeom)
     const double x_coord = 0.325;
     const double y_coord = 0.147;
 
-    const Point point_to_proj(x_coord, y_coord, expected_proj_dist);
+    Point point_to_proj(x_coord, y_coord, expected_proj_dist);
 
     array_1d<double,3> dir_vector;
     array_1d<double,3> normal_vector;
@@ -111,6 +111,21 @@ void TestFastProjectDirection(const TGeometryType& rGeom)
     Point projected_point;
 
     double proj_distance = GeometricalProjectionUtilities::FastProjectDirection(
+        rGeom,
+        point_to_proj,
+        projected_point,
+        normal_vector,
+        dir_vector);
+
+    KRATOS_CHECK_DOUBLE_EQUAL(expected_proj_dist, proj_distance);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.X(), x_coord);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.Y(), y_coord);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.Z(), 0.0);
+
+    // Projection from the opposite side
+    point_to_proj.Coordinates() = 2*projected_point.Coordinates() - point_to_proj.Coordinates();
+
+    proj_distance = GeometricalProjectionUtilities::FastProjectDirection(
         rGeom,
         point_to_proj,
         projected_point,
