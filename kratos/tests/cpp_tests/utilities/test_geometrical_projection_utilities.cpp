@@ -287,7 +287,7 @@ KRATOS_TEST_CASE_IN_SUITE(GeometricalProjectionUtilitiesFastProject, KratosCoreF
     const double y_coord = 0.147;
 
     const Point point_in_plane(-1.274, 10.478, 0.0);
-    const Point point_to_proj(x_coord, y_coord, expected_proj_dist);
+    Point point_to_proj(x_coord, y_coord, expected_proj_dist);
 
     array_1d<double,3> normal_vector;
 
@@ -298,6 +298,19 @@ KRATOS_TEST_CASE_IN_SUITE(GeometricalProjectionUtilitiesFastProject, KratosCoreF
     double proj_distance;
 
     Point projected_point = GeometricalProjectionUtilities::FastProject(
+        point_in_plane,
+        point_to_proj,
+        normal_vector,
+        proj_distance);
+
+    KRATOS_CHECK_DOUBLE_EQUAL(expected_proj_dist, proj_distance);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.X(), x_coord);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.Y(), y_coord);
+    KRATOS_CHECK_DOUBLE_EQUAL(projected_point.Z(), 0.0);
+
+    point_to_proj.Coordinates() = 2*projected_point.Coordinates() - point_to_proj.Coordinates();
+
+    projected_point = GeometricalProjectionUtilities::FastProject(
         point_in_plane,
         point_to_proj,
         normal_vector,
