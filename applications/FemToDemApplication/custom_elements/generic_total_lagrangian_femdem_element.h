@@ -258,7 +258,7 @@ protected:
         const IndexType PointNumber,
         const GeometryType::IntegrationMethod& rIntegrationMethod) override;
 
-    // ************** Methods to compute the tangent constitutive tensor via numerical derivation ************** 
+    // ************** Methods to compute the tangent constitutive tensor via numerical derivation **************
     /**
      * this computes the Tangent tensor via numerical derivation (perturbations)
      */
@@ -313,7 +313,7 @@ protected:
      * this performs the smooting and integrates the CL and returns the integrated Stress
      */
     virtual Vector IntegrateSmoothedConstitutiveLaw(const std::string &rYieldSurface, ConstitutiveLaw::Parameters &rValues,
-                                             const ConstitutiveVariables &rThisConstVars, const KinematicVariables &rKinVariables, 
+                                             const ConstitutiveVariables &rThisConstVars, const KinematicVariables &rKinVariables,
                                              Vector &rStrainVector, double& rDamageElement,  bool& rIsDamaging, const double CharacteristicLength,
                                              const bool SaveIntVars);
 
@@ -339,7 +339,7 @@ protected:
 
     /**
      * this sets the numbering for several purposes
-     * at the edges 
+     * at the edges
      */
     void SetNodeIndexes(Matrix& rMatrix)
     {
@@ -352,7 +352,7 @@ protected:
 
     /**
      * this imposes the damage/threshold to be equal
-     * at the edges 
+     * at the edges
      */
     void InitializeInternalVariablesAfterMapping();
 
@@ -417,13 +417,13 @@ protected:
 
 
     virtual void CheckIfEraseElement(
-        const ProcessInfo &rCurrentProcessInfo, 
+        const ProcessInfo &rCurrentProcessInfo,
         const Properties& rProperties)
     {
         if (mDamage >= 0.98) {
             this->Set(ACTIVE, false);
             mDamage = 0.98;
-            // We set a "flag" to generate the DEM 
+            // We set a "flag" to generate the DEM
             // rCurrentProcessInfo[GENERATE_DEM] = true;
             this->SetValue(GENERATE_DEM, true);
         }

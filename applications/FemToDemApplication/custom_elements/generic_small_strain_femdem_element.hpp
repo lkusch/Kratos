@@ -51,7 +51,7 @@ namespace Kratos
  * @author Alejandro Cornejo
  */
 template<unsigned int TDim, unsigned int TyieldSurf>
-class GenericSmallStrainFemDemElement 
+class GenericSmallStrainFemDemElement
     : public GenericTotalLagrangianFemDemElement<TDim,TyieldSurf> // Derived Element from SolidMechanics
 {
 public:
@@ -264,7 +264,7 @@ protected:
 
     bool UseElementProvidedStrain() const override;
 
-        
+
     ///@name Static Member Variables
     ///@{
 
