@@ -389,6 +389,9 @@ class MainCoupledFemDem_Solution:
                     neighbour_elemental_finder.ClearNeighbours()
                     neighbour_elemental_finder.Execute()
 
+                self.FEM_Solution.KratosPrintInfo("FEM-DEM:: Solving FEMDEM after remeshing for stabilizing")
+                self.FEM_Solution.solver.Solve()
+
 #RefineMappedVariables============================================================================================================================
     def RefineMappedVariables(self):
         for elem in self.FEM_Solution.main_model_part.Elements:
