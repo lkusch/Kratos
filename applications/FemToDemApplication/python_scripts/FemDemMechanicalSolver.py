@@ -218,6 +218,16 @@ class FemDemMechanicalSolver(object):
             self._execute_after_reading()
             self._set_and_fill_buffer()
 
+        elif (self.settings["model_import_settings"]["input_type"].GetString() == "rest"): # RESTART
+            KratosMultiphysics.Logger.PrintInfo("::[PythonSolver]::", "Loading model part from restart file.")
+            from KratosMultiphysics.restart_utility import RestartUtility
+
+            self.settings["model_import_settings"].RemoveValue("input_type")
+            self.settings["model_import_settings"].RemoveValue("input_filename")
+
+            RestartUtility(self.main_model_part, self.settings["model_import_settings"]).LoadRestart()
+            KratosMultiphysics.Logger.PrintInfo("::[PythonSolver]::", "Finished loading model part from restart file.")
+
         else:
             raise Exception("Other input options are not yet implemented.")
 

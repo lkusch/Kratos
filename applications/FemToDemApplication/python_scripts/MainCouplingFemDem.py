@@ -171,6 +171,9 @@ class MainCoupledFemDem_Solution:
 
         self.FindNeighboursIfNecessary()
 
+        if self.FEM_Solution.ProjectParameters["restart_options"]["SaveRestart"].GetBool():
+            self.InitializeRestartUtility()
+
 #============================================================================================================================
     def RunMainTemporalLoop(self):
         # Solving the problem (time integration)
@@ -265,6 +268,10 @@ class MainCoupledFemDem_Solution:
 
         if not self.is_slave:
             self.PrintResults()
+
+        if self.FEM_Solution.ProjectParameters["restart_options"]["SaveRestart"].GetBool():
+            self.PrintRestartFiles()
+
 
 #============================================================================================================================
     def Finalize(self):
@@ -1026,3 +1033,38 @@ class MainCoupledFemDem_Solution:
                                                    mixed_solid_balls_nodal_results,
                                                    mixed_solid_balls_fluid_nodal_results,
                                                    gauss_points_results)
+
+#============================================================================================================================
+
+    def PrintRestartFiles(self):
+        # settings = KratosMultiphysics.Parameters("""{
+        #     "model_part_name"              : "Structure",
+        #     "echo_level"                   : 1,
+        #     "restart_save_frequency"       : 0.0,
+        #     "restart_control_type"         : "time",
+        #     "save_restart_files_in_folder" : true,
+        #     "output_path"                  : "",
+        #     "max_files_to_keep"            : 4
+        # } """)
+        # import KratosMultiphysics.save_restart_process as save_process
+        # restart_printer = save_process.SaveRestartProcess(self.model, settings)
+        # restart_printer.PrintOutput()
+        pass
+
+    def InitializeRestartUtility(self):
+        # default_settings = KratosMultiphysics.Parameters("""
+        # {
+        #     "input_filename"                 : "Structure",
+        #     "input_output_path"              : "",
+        #     "echo_level"                     : 0,
+        #     "serializer_trace"               : "no_trace",
+        #     "restart_load_file_label"        : "",
+        #     "load_restart_files_from_folder" : true,
+        #     "restart_save_frequency"         : 0.0,
+        #     "restart_control_type"           : "time",
+        #     "save_restart_files_in_folder"   : true,
+        #     "set_mpi_communicator"           : true,
+        #     "max_files_to_keep"              : -1
+        # }
+        # """)
+        pass
