@@ -288,6 +288,14 @@ protected:
     ///@}
     ///@name Serialization
     ///@{
+    friend class Serializer;
+
+    // A private default constructor necessary for serialization
+
+    void save(Serializer& rSerializer) const override;
+
+    void load(Serializer& rSerializer) override;
+    
 }; // Class GenericSmallStrainFemDemElement
 
 template<unsigned int TDim, unsigned int TyieldSurf> constexpr SizeType GenericSmallStrainFemDemElement<TDim, TyieldSurf>::VoigtSize;
