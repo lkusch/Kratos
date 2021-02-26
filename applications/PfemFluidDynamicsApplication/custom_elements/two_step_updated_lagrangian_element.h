@@ -782,11 +782,19 @@ namespace Kratos
     void save(Serializer &rSerializer) const override
     {
       KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element);
+      rSerializer.save("MaterialDeviatoricCoefficient",mMaterialDeviatoricCoefficient);
+      rSerializer.save("MaterialVolumetricCoefficient", mMaterialVolumetricCoefficient);
+      rSerializer.save("MaterialDensity", mMaterialDensity);
+      rSerializer.save("pConstitutiveLaw", mpConstitutiveLaw);
     }
 
     void load(Serializer &rSerializer) override
     {
       KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element);
+      rSerializer.load("MaterialDeviatoricCoefficient",mMaterialDeviatoricCoefficient);
+      rSerializer.load("MaterialVolumetricCoefficient", mMaterialVolumetricCoefficient);
+      rSerializer.load("MaterialDensity", mMaterialDensity);
+      rSerializer.load("pConstitutiveLaw", mpConstitutiveLaw);
     }
 
     ///@}

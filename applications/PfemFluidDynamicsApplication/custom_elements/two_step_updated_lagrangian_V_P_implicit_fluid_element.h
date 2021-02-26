@@ -291,7 +291,7 @@ namespace Kratos
     ///@name Protected member Variables
     ///@{
 
-    ConstitutiveLaw::Pointer mpConstitutiveLaw = nullptr;
+    // ConstitutiveLaw::Pointer mpConstitutiveLaw = nullptr;
 
     ///@}
     ///@name Protected Operators
