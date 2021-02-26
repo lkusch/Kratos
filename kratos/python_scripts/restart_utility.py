@@ -124,6 +124,7 @@ class RestartUtility:
         # Load the ModelPart
         serializer = KratosMultiphysics.FileSerializer(restart_path, self.serializer_flag)
         serializer.Load(self.model_part_name, self.model_part)
+        aa
 
         self._ExecuteAfterLoad()
 
@@ -261,7 +262,7 @@ class RestartUtility:
             return self.raw_path
 
     def __GetFileNameLoad(self):
-        restart_file_name = self.raw_file_name + "_" + self._GetFileLabelLoad()
+        restart_file_name = self.raw_file_name  + self._GetFileLabelLoad()
 
         return os.path.join(self.__GetFolderPathLoad(), restart_file_name)
 

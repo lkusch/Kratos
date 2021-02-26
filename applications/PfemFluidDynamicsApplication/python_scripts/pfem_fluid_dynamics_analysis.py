@@ -214,6 +214,24 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
 
         self.StopTimeMeasuring(self.clock_time,"Finalize Step" , self.report);
 
+        #*************************************************
+        #*************************************************
+        settings = KratosMultiphysics.Parameters("""{
+            "model_part_name"              : "PfemFluidModelPart",
+            "echo_level"                   : 1,
+            "restart_save_frequency"       : 1.0,
+            "restart_control_type"         : "time",
+            "serializer_trace"             : "no_trace",
+            "save_restart_files_in_folder" : true,
+            "output_path"                  : "",
+            "max_files_to_keep"            : 50
+        } """)
+        import KratosMultiphysics.save_restart_process as save_process
+        restart_printer = save_process.SaveRestartProcess(self.model, settings)
+        restart_printer.PrintOutput()
+        #*************************************************
+        #*************************************************
+
     def Finalize(self):
         """This function finalizes the AnalysisStage
         Usage: It is designed to be called ONCE, AFTER the execution of the solution-loop
