@@ -2059,24 +2059,6 @@ void GenericTotalLagrangianFemDemElement<TDim,TyieldSurf>::CalculateGreenLagrang
 /***********************************************************************************/
 
 template<unsigned int TDim, unsigned int TyieldSurf>
-void GenericTotalLagrangianFemDemElement<TDim,TyieldSurf>::GetValueOnIntegrationPoints(
-    const Variable<double> &rVariable,
-    std::vector<double> &rValues,
-    const ProcessInfo &rCurrentProcessInfo)
-{
-    if (rVariable == DAMAGE_ELEMENT || 
-        rVariable == IS_DAMAGED || 
-        rVariable == STRESS_THRESHOLD || 
-        rVariable == ACUMULATED_PLASTIC_STRAIN ||
-        rVariable == PLASTIC_UNIAXIAL_STRESS) {
-            CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-    }
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-template<unsigned int TDim, unsigned int TyieldSurf>
 void GenericTotalLagrangianFemDemElement<TDim,TyieldSurf>::CalculateOnIntegrationPoints(
     const Variable<double> &rVariable,
     std::vector<double> &rOutput,
@@ -2177,7 +2159,7 @@ void GenericTotalLagrangianFemDemElement<TDim,TyieldSurf>::CalculateOnIntegratio
 template<unsigned int TDim, unsigned int TyieldSurf>
 void GenericTotalLagrangianFemDemElement<TDim,TyieldSurf>::SetValuesOnIntegrationPoints(
     const Variable<double> &rVariable,
-    std::vector<double> &rValues,
+    const std::vector<double> &rValues,
     const ProcessInfo &rCurrentProcessInfo)
 {
     if (rVariable == DAMAGE_ELEMENT) {

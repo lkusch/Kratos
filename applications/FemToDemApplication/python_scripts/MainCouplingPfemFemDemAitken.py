@@ -65,8 +65,6 @@ class MainCouplingPfemFemDemAitken_Solution(MainCouplingPfemFemDem.MainCouplingP
         PlotFileIterAitken.write("       time           ITER\n")
         PlotFileIterAitken.close()
 
-        self.wave_cal = PFEM.CalculateWaveHeightProcess(self.PFEM_Solution.main_model_part, 1, 0, -30.0, 0.0, 0.5, "WaveHeight", 0.1)
-
 
 #============================================================================================================================
     def SolveSolutionStep(self):
@@ -110,7 +108,10 @@ class MainCouplingPfemFemDemAitken_Solution(MainCouplingPfemFemDem.MainCouplingP
             KratosPrintInfo("================================================" + "\n" +
                            " ==== SOLVING FEMDEM PART OF THE CALCULATION ====" + "\n" +
                            " ================================================")
-            self.SolveSolutionStepFEMDEM()
+            if (solid_model_part.GetSubModelPart("fsi_interface_model_part").NumberOfNodes() > 2 or self.FEMDEM_Solution.FEM_Solution.step <= 4):
+                self.SolveSolutionStepFEMDEM()
+            else:
+                KratosPrintInfo("FEM-DEM not solved -> ¡No interface!")
 
             # If there are no interface nodes yet
             if (solid_model_part.GetSubModelPart("fsi_interface_model_part").NumberOfNodes() < 2):
@@ -150,8 +151,6 @@ class MainCouplingPfemFemDemAitken_Solution(MainCouplingPfemFemDem.MainCouplingP
         else:
             PlotFileIterAitken.write("    " + "{0:.4e}".format(time).rjust(11) + "        " + str(aitken_iteration) + "  MAX iterations reached!" + "\n")
         PlotFileIterAitken.close()
-
-        self.wave_cal.Execute()
 
 #============================================================================================================================
     def UpdateAndRelaxSolution(self, solid_model_part):
