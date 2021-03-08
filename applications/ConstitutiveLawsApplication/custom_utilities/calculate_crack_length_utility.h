@@ -19,7 +19,6 @@
 // External includes
 
 // Project includes
-#include "processes/process.h"
 #include "includes/model_part.h"
 #include "structural_mechanics_application_variables.h"
 
@@ -53,9 +52,7 @@ namespace Kratos
  * @brief This utility computed the crack length in damage mechanics
  * @authors Alejandro Cornejo
  */
-template <SizeType TDimension>
 class KRATOS_API(CONSTITUTIVE_LAWS_APPLICATION) CalculateCrackLengthUtility
-    : public Process
 {
 public:
     ///@name Type Definitions
@@ -64,12 +61,8 @@ public:
     /// Pointer definition of CalculateCrackLengthUtility
     KRATOS_CLASS_POINTER_DEFINITION(CalculateCrackLengthUtility);
 
-    static constexpr SizeType Dimension = TDimension;
-
-    static constexpr SizeType VoigtSize = (Dimension == 3) ? 6 : 3;
-
     /// The definition of the Voigt array type
-    typedef array_1d<double, VoigtSize> BoundedVectorVoigtType;
+    typedef array_1d<double, 6> BoundedVectorVoigtType;
     typedef array_1d<double, 3> BoundedVectorDimensionType;
 
     /// Definition of the zero tolerance
@@ -80,24 +73,13 @@ public:
     ///@{
 
     CalculateCrackLengthUtility(
-        ModelPart& rModelPart,
-        const BoundedVectorDimensionType& rAdvancingDirection,
-        const SizeType InitialElementId = 0
-        ) : mrModelPart(rModelPart),
-            mAdvancingDirection(rAdvancingDirection),
-            mCrackTipElementId(InitialElementId)
-    {
-        if (mCrackTipElementId != 0)
-            mArrayElementIds.push_back(mCrackTipElementId);
-    }
+        ModelPart &rModelPart,
+        const array_1d<double, 3> &rAdvancingDirection,
+        const SizeType InitialElementId = 0);
 
     CalculateCrackLengthUtility(
-        ModelPart& rModelPart,
-        const BoundedVectorDimensionType& rAdvancingDirection
-        ) : mrModelPart(rModelPart),
-            mAdvancingDirection(rAdvancingDirection)
-    {
-    }
+        ModelPart &rModelPart,
+        const array_1d<double, 3> &rAdvancingDirection);
 
     /// Destructor.
     virtual ~CalculateCrackLengthUtility() {}
@@ -146,7 +128,7 @@ private:
     ModelPart& mrModelPart;
     int mCrackTipElementId = 0;
     double mCrackLength    = 0;
-    BoundedVectorDimensionType mAdvancingDirection = ZeroVector(Dimension);
+    BoundedVectorDimensionType mAdvancingDirection = ZeroVector(3);
     std::vector<int> mArrayElementIds;
 
     ///@}
