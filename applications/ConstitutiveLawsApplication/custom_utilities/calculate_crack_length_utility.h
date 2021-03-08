@@ -19,7 +19,8 @@
 // External includes
 
 // Project includes
-
+#include "processes/process.h"
+#include "includes/model_part.h"
 #include "structural_mechanics_application_variables.h"
 
 namespace Kratos
@@ -51,7 +52,8 @@ namespace Kratos
  * @authors Alejandro Cornejo
  */
 template <class TDimension>
-class CalculateCrackLengthUtility
+class KRATOS_API(CONSTITUTIVE_LAWS_APPLICATION) CalculateCrackLengthUtility
+    : public Process
 {
 public:
     ///@name Type Definitions
@@ -127,6 +129,11 @@ private:
     ///@name Static Member Variables
     ///@{
 
+    int mCrackTipElementId = 0;
+    double mCrackLength    = 0;
+    BoundedVectorVoigtType mAdvancingDirection = ZeroVector(VoigtSize);
+    std::vector<int> mArrayElementIds;
+
     ///@}
     ///@name Member Variables
     ///@{
@@ -168,33 +175,6 @@ protected:
     ///@{
 
     ///@}
-private:
-    ///@name Static Member Variables
-    ///@{
-
-    ///@}
-    ///@name Member Variables
-    ///@{
-
-    ///@}
-    ///@name Private Operators
-    ///@{
-
-    ///@}
-    ///@name Private Operations
-    ///@{
-
-    ///@}
-    ///@name Private  Access
-    ///@{
-
-    ///@}
-    ///@name Private Inquiry
-    ///@{
-
-    ///@}
-    ///@name Un accessible methods
-    ///@{
 
     /// Assignment operator.
     CalculateCrackLengthUtility &operator=(CalculateCrackLengthUtility const &rOther);
