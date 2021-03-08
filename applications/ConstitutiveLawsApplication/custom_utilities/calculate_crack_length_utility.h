@@ -81,6 +81,8 @@ public:
         ModelPart &rModelPart,
         const array_1d<double, 3> &rAdvancingDirection);
 
+    double RetrieveCrackLength();
+
     /// Destructor.
     virtual ~CalculateCrackLengthUtility() {}
 
