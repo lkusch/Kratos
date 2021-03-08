@@ -28,11 +28,17 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
+    py::class_<CalculateCrackLengthUtility<3>, CalculateCrackLengthUtility<3>::Pointer>
+    (m, "CalculateCrackLengthUtility3D")
+        .def(py::init<ModelPart&, const array_1d<double, 3>&, const std::size_t>())
+        .def(py::init<ModelPart&, const array_1d<double, 3>&>())
+        ;
 
-
-    // py::class_<ProjectVectorOnSurfaceUtility>(m,"ProjectVectorOnSurfaceUtility")
-    //     .def_static("Execute",&ProjectVectorOnSurfaceUtility::Execute);
-
+    py::class_<CalculateCrackLengthUtility<2>, CalculateCrackLengthUtility<2>::Pointer>
+    (m, "CalculateCrackLengthUtility2D")
+        .def(py::init<ModelPart&, const array_1d<double, 3>&, const std::size_t>())
+        .def(py::init<ModelPart&, const array_1d<double, 3>&>())
+        ;
 
 }
 

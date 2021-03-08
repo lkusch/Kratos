@@ -33,6 +33,8 @@ namespace Kratos
 ///@name Type Definitions
 ///@{
 
+    typedef std::size_t SizeType;
+
 ///@}
 ///@name  Enum's
 ///@{
@@ -51,7 +53,7 @@ namespace Kratos
  * @brief This utility computed the crack length in damage mechanics
  * @authors Alejandro Cornejo
  */
-template <class TDimension>
+template <SizeType TDimension>
 class KRATOS_API(CONSTITUTIVE_LAWS_APPLICATION) CalculateCrackLengthUtility
     : public Process
 {
@@ -62,16 +64,13 @@ public:
     /// Pointer definition of CalculateCrackLengthUtility
     KRATOS_CLASS_POINTER_DEFINITION(CalculateCrackLengthUtility);
 
-    /// Definition of size type
-    typedef std::size_t SizeType;
-
     static constexpr SizeType Dimension = TDimension;
 
     static constexpr SizeType VoigtSize = (Dimension == 3) ? 6 : 3;
 
     /// The definition of the Voigt array type
     typedef array_1d<double, VoigtSize> BoundedVectorVoigtType;
-    typedef array_1d<double, Dimension> BoundedVectorDimensionType;
+    typedef array_1d<double, 3> BoundedVectorDimensionType;
 
     /// Definition of the zero tolerance
     static constexpr double tolerance = std::numeric_limits<double>::epsilon();
@@ -80,8 +79,23 @@ public:
     ///@name Life Cycle
     ///@{
 
-    /// Constructor
-    CalculateCrackLengthUtility()
+    CalculateCrackLengthUtility(
+        ModelPart& rModelPart,
+        const BoundedVectorDimensionType& rAdvancingDirection,
+        const SizeType InitialElementId = 0
+        ) : mrModelPart(rModelPart),
+            mAdvancingDirection(rAdvancingDirection),
+            mCrackTipElementId(InitialElementId)
+    {
+        if (mCrackTipElementId != 0)
+            mArrayElementIds.push_back(mCrackTipElementId);
+    }
+
+    CalculateCrackLengthUtility(
+        ModelPart& rModelPart,
+        const BoundedVectorDimensionType& rAdvancingDirection
+        ) : mrModelPart(rModelPart),
+            mAdvancingDirection(rAdvancingDirection)
     {
     }
 
@@ -129,9 +143,10 @@ private:
     ///@name Static Member Variables
     ///@{
 
+    ModelPart& mrModelPart;
     int mCrackTipElementId = 0;
     double mCrackLength    = 0;
-    BoundedVectorVoigtType mAdvancingDirection = ZeroVector(VoigtSize);
+    BoundedVectorDimensionType mAdvancingDirection = ZeroVector(Dimension);
     std::vector<int> mArrayElementIds;
 
     ///@}
