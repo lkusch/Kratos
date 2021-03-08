@@ -50,6 +50,7 @@ namespace Kratos
  * @brief This utility computed the crack length in damage mechanics
  * @authors Alejandro Cornejo
  */
+template <class TDimension>
 class CalculateCrackLengthUtility
 {
 public:
@@ -62,8 +63,13 @@ public:
     /// Definition of size type
     typedef std::size_t SizeType;
 
-    /// Definition of index type
-    typedef std::size_t IndexType;
+    static constexpr SizeType Dimension = TDimension;
+
+    static constexpr SizeType VoigtSize = (Dimension == 3) ? 6 : 3;
+
+    /// The definition of the Voigt array type
+    typedef array_1d<double, VoigtSize> BoundedVectorVoigtType;
+    typedef array_1d<double, Dimension> BoundedVectorDimensionType;
 
     /// Definition of the zero tolerance
     static constexpr double tolerance = std::numeric_limits<double>::epsilon();
