@@ -186,7 +186,7 @@ namespace Kratos {
                 double MaximumAdmisibleShearForce;
 
                 CalculateTangentialForce(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
-                                         sliding, p_element1, p_element2, original_equiv_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
+                                         LocalRelVel, sliding, p_element1, p_element2, original_equiv_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
 
                 double& elastic_energy = p_element1->GetElasticEnergy();
                 DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyDEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
@@ -324,7 +324,7 @@ namespace Kratos {
                 double MaximumAdmisibleShearForce;
 
                 CalculateTangentialForceWithFEM(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
-                                                sliding, p_element, wall, original_effective_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
+                                                LocalRelVel, sliding, p_element, wall, original_effective_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
 
                 double& elastic_energy = p_element->GetElasticEnergy();
                 DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyFEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
@@ -367,6 +367,7 @@ namespace Kratos {
                                                         double LocalElasticContactForce[3],
                                                         double ViscoDampingLocalContactForce[3],
                                                         const double LocalDeltDisp[3],
+                                                        const double LocalRelVel[3],
                                                         bool& sliding,
                                                         ContactInfoSphericParticle* const element1,
                                                         ContactInfoSphericParticle* const element2,
@@ -396,6 +397,10 @@ namespace Kratos {
         const double neighbour_tg_of_dynamic_friction_angle = element2->GetTgOfDynamicFrictionAngle();
         double equiv_tg_of_dynamic_fri_ang            = 0.5 * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
 
+        const double my_friction_decay_coefficient          = element1->GetFrictionDecayCoefficient();
+        const double neighbour_friction_decay_coefficient   = element2->GetFrictionDecayCoefficient();
+        double equiv_friction_decay_coefficient             = 0.5 * (my_friction_decay_coefficient + neighbour_friction_decay_coefficient);
+
         if(equiv_tg_of_static_fri_ang < 0.0 || equiv_tg_of_dynamic_fri_ang < 0.0) {
             KRATOS_ERROR << "The averaged friction is negative for one contact of element with Id: "<< element1->Id()<<std::endl;
         }
@@ -420,8 +425,10 @@ namespace Kratos {
             }
         }
 
-        MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_static_fri_ang;
-        if (AuxElasticShearForce > MaximumAdmisibleShearForce) MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_dynamic_fri_ang;
+        const double ShearRelVel = sqrt(LocalRelVel[0] * LocalRelVel[0] + LocalRelVel[1] * LocalRelVel[1]);
+        double equiv_friction = equiv_tg_of_dynamic_fri_ang + (equiv_tg_of_static_fri_ang - equiv_tg_of_dynamic_fri_ang) * exp(-equiv_friction_decay_coefficient * ShearRelVel);
+
+        MaximumAdmisibleShearForce = normal_contact_force * equiv_friction;
 
         const double tangential_contact_force_0 = LocalElasticContactForce[0] + ViscoDampingLocalContactForce[0];
         const double tangential_contact_force_1 = LocalElasticContactForce[1] + ViscoDampingLocalContactForce[1];
@@ -491,6 +498,7 @@ namespace Kratos {
                                                                double LocalElasticContactForce[3],
                                                                double ViscoDampingLocalContactForce[3],
                                                                const double LocalDeltDisp[3],
+                                                               const double LocalRelVel[3],
                                                                bool& sliding,
                                                                ContactInfoSphericParticle* const element,
                                                                Condition* const wall,
@@ -520,6 +528,10 @@ namespace Kratos {
         const double neighbour_tg_of_dynamic_friction_angle = wall->GetProperties()[DYNAMIC_FRICTION];
         double equiv_tg_of_dynamic_fri_ang            = 0.5 * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
 
+        const double my_friction_decay_coefficient          = element->GetFrictionDecayCoefficient();
+        const double neighbour_friction_decay_coefficient   = wall->GetProperties()[FRICTION_DECAY];
+        double equiv_friction_decay_coefficient             = 0.5 * (my_friction_decay_coefficient + neighbour_friction_decay_coefficient);
+
         if(equiv_tg_of_static_fri_ang < 0.0 || equiv_tg_of_dynamic_fri_ang < 0.0) {
             KRATOS_ERROR << "The averaged friction is negative for one contact of element with Id: "<< element->Id()<<std::endl;
         }
@@ -544,8 +556,10 @@ namespace Kratos {
             }
         }
 
-        MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_static_fri_ang;
-        if (AuxElasticShearForce > MaximumAdmisibleShearForce) MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_dynamic_fri_ang;
+        const double ShearRelVel = sqrt(LocalRelVel[0] * LocalRelVel[0] + LocalRelVel[1] * LocalRelVel[1]);
+        double equiv_friction = equiv_tg_of_dynamic_fri_ang + (equiv_tg_of_static_fri_ang - equiv_tg_of_dynamic_fri_ang) * exp(-equiv_friction_decay_coefficient * ShearRelVel);
+
+        MaximumAdmisibleShearForce = normal_contact_force * equiv_friction;
 
         const double tangential_contact_force_0 = LocalElasticContactForce[0] + ViscoDampingLocalContactForce[0];
         const double tangential_contact_force_1 = LocalElasticContactForce[1] + ViscoDampingLocalContactForce[1];
