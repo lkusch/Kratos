@@ -681,6 +681,28 @@ class ExplicitStrategy():
 
             DiscontinuumConstitutiveLaw.SetConstitutiveLawInProperties(properties, True)
 
+        else:
+            DiscontinuumConstitutiveLaw = globals().get(properties[DEM_DISCONTINUUM_CONSTITUTIVE_LAW_NAME])()
+            coefficient_of_restitution = properties[COEFFICIENT_OF_RESTITUTION]
+
+            type_of_law = DiscontinuumConstitutiveLaw.GetTypeOfLaw()
+
+            write_gamma = False
+
+            if (type_of_law == 'Linear'):
+                gamma = self.RootByBisection(self.coeff_of_rest_diff, 0.0, 16.0, 0.0001, 300, coefficient_of_restitution)
+                write_gamma = True
+
+            elif (type_of_law == 'Hertz' or type_of_law == 'Conical_damage'):
+                gamma = self.GammaForHertzThornton(coefficient_of_restitution)
+                write_gamma = True
+
+            else:
+                pass
+
+            if write_gamma == True:
+                properties[DAMPING_GAMMA] = gamma
+
         if properties.Has(DEM_TRANSLATIONAL_INTEGRATION_SCHEME_NAME):
             translational_scheme_name = properties[DEM_TRANSLATIONAL_INTEGRATION_SCHEME_NAME]
         else:
