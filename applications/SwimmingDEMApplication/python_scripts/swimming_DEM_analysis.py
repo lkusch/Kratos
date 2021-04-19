@@ -87,7 +87,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
         self.dem_inlet_model_part = self._GetDEMAnalysis().dem_inlet_model_part
         self.vars_man.ConstructListsOfVariables(self.project_parameters)
 
-        super(SwimmingDEMAnalysis, self).__init__(model, self.project_parameters)
+        super().__init__(model, self.project_parameters)
 
     def SetFluidParameters(self):
         pass
@@ -195,7 +195,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
             self.do_solve_dem = False
 
     def Run(self):
-        super(SwimmingDEMAnalysis, self).Run()
+        super().Run()
 
         return self.GetReturnValue()
 
@@ -211,6 +211,11 @@ class SwimmingDEMAnalysis(AnalysisStage):
         max_elem_Id = creator_destructor.FindMaxElementIdInModelPart(self.fluid_model_part)
         max_cond_Id = creator_destructor.FindMaxConditionIdInModelPart(self.fluid_model_part)
         self._GetDEMAnalysis().BaseReadModelParts(max_node_Id, max_elem_Id, max_cond_Id)
+
+    def InitializeVariablesWithNonZeroValues(self):
+        SDP.InitializeVariablesWithNonZeroValues(self.project_parameters,
+                                                self.fluid_model_part,
+                                                self.spheres_model_part)
 
     def Initialize(self):
         Say('Initializing simulation...\n')
@@ -261,7 +266,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
 
         self.AssignKinematicViscosityFromDynamicViscosity()
 
-        super(SwimmingDEMAnalysis, self).Initialize()
+        super().Initialize()
 
         # coarse-graining: applying changes to the physical properties of the model to adjust for
         # the similarity transformation if required (fluid effects only).
@@ -320,6 +325,8 @@ class SwimmingDEMAnalysis(AnalysisStage):
         self.cluster_model_part.ProcessInfo[Kratos.DELTA_TIME] = self.time_step
         self.stationarity = False
 
+        self.seed = self.project_parameters["dem_parameters"]["seed"].GetInt()
+
         # setting up loop counters:
         self.DEM_to_fluid_counter = self.GetBackwardCouplingCounter()
         self.stationarity_counter = self.GetStationarityCounter()
@@ -340,9 +347,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
         self.post_utils_DEM = DP.PostUtils(self.project_parameters['dem_parameters'], self.spheres_model_part)
 
         # otherwise variables are set to 0 by default:
-        SDP.InitializeVariablesWithNonZeroValues(self.project_parameters,
-                                                 self.fluid_model_part,
-                                                 self.spheres_model_part)
+        self.InitializeVariablesWithNonZeroValues()
 
         if self.do_print_results:
             self.SetUpResultsDatabase()
@@ -374,6 +379,13 @@ class SwimmingDEMAnalysis(AnalysisStage):
         # ANALYTICS END
 
         self.FillHistoryForcePrecalculatedVectors()
+
+        import KratosMultiphysics.SwimmingDEMApplication.derivative_recovery.derivative_recovery_strategy as derivative_recoverer
+
+        self.recovery = derivative_recoverer.DerivativeRecoveryStrategy(
+            self.project_parameters,
+            self.fluid_model_part,
+            self.custom_functions_tool)
 
         self.PerformZeroStepInitializations()
 
@@ -441,7 +453,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
         self._GetDEMAnalysis().InitializeSolutionStep()
         if self._GetSolver().CannotIgnoreFluidNow():
             self._GetFluidAnalysis().InitializeSolutionStep()
-        super(SwimmingDEMAnalysis, self).InitializeSolutionStep()
+        super().InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
         # printing if required
@@ -460,7 +472,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
             self.dem_volume_tool.UpdateDataAndPrint(
                 self.project_parameters["fluid_domain_volume"].GetDouble())
 
-        super(SwimmingDEMAnalysis, self).FinalizeSolutionStep()
+        super().FinalizeSolutionStep()
 
     def OutputSolutionStep(self):
         # printing if required
@@ -469,7 +481,7 @@ class SwimmingDEMAnalysis(AnalysisStage):
             self.ComputePostProcessResults()
             self._Print()
 
-        super(SwimmingDEMAnalysis, self).OutputSolutionStep()
+        super().OutputSolutionStep()
 
     def _Print(self):
         os.chdir(self.post_path)
@@ -540,9 +552,9 @@ class SwimmingDEMAnalysis(AnalysisStage):
             # Note that right now only inlets of a single type are possible.
             # This should be generalized.
             if self.project_parameters["type_of_inlet"].GetString() == 'VelocityImposed':
-                self.DEM_inlet = DEM_Inlet(self.dem_inlet_model_part)
+                self.DEM_inlet = DEM_Inlet(self.dem_inlet_model_part, self.seed)
             elif self.project_parameters["type_of_inlet"].GetString() == 'ForceImposed':
-                self.DEM_inlet = DEM_Force_Based_Inlet(self.dem_inlet_model_part, self.project_parameters["inlet_force_vector"].GetVector())
+                self.DEM_inlet = DEM_Force_Based_Inlet(self.dem_inlet_model_part, self.project_parameters["inlet_force_vector"].GetVector(), self.seed)
 
             self._GetDEMAnalysis().DEM_inlet = self.DEM_inlet
             self.DEM_inlet.InitializeDEM_Inlet(self.spheres_model_part, self._GetDEMAnalysis().creator_destructor)
@@ -556,9 +568,6 @@ class SwimmingDEMAnalysis(AnalysisStage):
 
     def ProcessAnalyticData(self):
         self._GetDEMAnalysis().WriteAnalyticDataToFileAndClear()
-
-    def SetInletWatcher(self):
-        self.watcher_analyser.SetInlet(self.DEM_inlet)
 
     def TellTime(self):
         Say('DEM time: ', str(self.time) + ', step: ', self.step)
