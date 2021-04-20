@@ -34,7 +34,7 @@ Element::Pointer TransientConvectionDiffusionFICExplicitElement<TDim,TNumNodes>:
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 template< unsigned int TDim, unsigned int TNumNodes >
-void TransientConvectionDiffusionFICExplicitElement<TDim,TNumNodes>::CalculateLocalSystem( MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo )
+void TransientConvectionDiffusionFICExplicitElement<TDim,TNumNodes>::CalculateLocalSystem( MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, const ProcessInfo& rCurrentProcessInfo )
 {
     KRATOS_TRY
 
@@ -63,7 +63,7 @@ void TransientConvectionDiffusionFICExplicitElement<TDim,TNumNodes>::CalculateLo
 template< unsigned int TDim, unsigned int TNumNodes >
 void TransientConvectionDiffusionFICExplicitElement<TDim, TNumNodes>::CalculateFirstDerivativesContributions(MatrixType& rLeftHandSideMatrix,
                         VectorType& rRightHandSideVector,
-                        ProcessInfo& rCurrentProcessInfo)
+                        const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 

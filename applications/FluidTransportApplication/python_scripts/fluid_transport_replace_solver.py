@@ -50,7 +50,7 @@ class FluidTransportReplaceSolver(FluidTransportSolver):
             "residual_absolute_tolerance":        1.0E-9,
             "max_iteration":                      15,
             "linear_solver_settings":             {
-                "solver_type":   "ExternalSolversApplication.super_lu",
+                "solver_type":   "LinearSolversApplication.sparse_lu",
                 "tolerance": 1.0e-6,
                 "max_iteration": 100,
                 "scaling": false,

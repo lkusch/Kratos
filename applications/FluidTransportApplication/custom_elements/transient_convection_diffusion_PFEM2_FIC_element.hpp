@@ -86,7 +86,7 @@ public:
     TransientConvectionDiffusionPFEM2FICElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : TransientConvectionDiffusionFICElement<TDim,TNumNodes>( NewId, pGeometry, pProperties ) {}
 
     /// Destructor.
-    virtual ~TransientConvectionDiffusionPFEM2FICElement() {}
+    ~TransientConvectionDiffusionPFEM2FICElement() override {}
 
 ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

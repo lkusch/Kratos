@@ -34,7 +34,7 @@ Element::Pointer TransientConvectionDiffusionFICElement<TDim,TNumNodes>::Create(
 //----------------------------------------------------------------------------------------
 
 template< unsigned int TDim, unsigned int TNumNodes >
-int TransientConvectionDiffusionFICElement<TDim,TNumNodes>::Check( const ProcessInfo& rCurrentProcessInfo )
+int TransientConvectionDiffusionFICElement<TDim,TNumNodes>::Check( const ProcessInfo& rCurrentProcessInfo ) const
 {
     KRATOS_TRY
 
@@ -50,7 +50,7 @@ int TransientConvectionDiffusionFICElement<TDim,TNumNodes>::Check( const Process
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 template< unsigned int TDim, unsigned int TNumNodes >
-void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::InitializeNonLinearIteration(ProcessInfo& rCurrentProcessInfo)
+void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::InitializeNonLinearIteration(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -101,7 +101,7 @@ void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::InitializeNonLinear
 template< unsigned int TDim, unsigned int TNumNodes >
 void TransientConvectionDiffusionFICElement<TDim, TNumNodes>::CalculateFirstDerivativesContributions(MatrixType& rLeftHandSideMatrix,
                         VectorType& rRightHandSideVector,
-                        ProcessInfo& rCurrentProcessInfo)
+                        const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -226,7 +226,7 @@ void TransientConvectionDiffusionFICElement<TDim, TNumNodes>::CalculateFirstDeri
 
 template< unsigned int TDim, unsigned int TNumNodes >
 void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
-					      ProcessInfo& rCurrentProcessInfo)
+					      const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
@@ -239,7 +239,7 @@ void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateFirstDeriv
 
 template< unsigned int TDim, unsigned int TNumNodes >
 void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector,
-					      ProcessInfo& rCurrentProcessInfo)
+					      const ProcessInfo& rCurrentProcessInfo)
 {
     const unsigned int element_size = TNumNodes;
 
@@ -827,43 +827,22 @@ KRATOS_TRY
     KRATOS_CATCH("")
 }
 
-//----------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 template< unsigned int TDim, unsigned int TNumNodes >
-void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::GetValueOnIntegrationPoints( const Variable<double>& rVariable,std::vector<double>& rValues,
-                                                                const ProcessInfo& rCurrentProcessInfo )
+void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateOnIntegrationPoints( const Variable<double>& rVariable,std::vector<double>& rValues,
+                                                                            const ProcessInfo& rCurrentProcessInfo )
 {
+    KRATOS_TRY
+
     const GeometryType& Geom = this->GetGeometry();
     GeometryData::IntegrationMethod ThisIntegrationMethod = this->GetIntegrationMethod();
     const GeometryType::IntegrationPointsArrayType& integration_points = Geom.IntegrationPoints( ThisIntegrationMethod );
     const unsigned int NumGPoints = integration_points.size();
 
-    if ( rVariable == FIC_BETA || rVariable == PECLET || rVariable == CFL_NUMBER)
-    {
-        if ( rValues.size() != NumGPoints )
-            rValues.resize(NumGPoints);
-
-        this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    if ( rValues.size() != NumGPoints ) {
+        rValues.resize(NumGPoints);
     }
-    else
-    {
-        if ( rValues.size() != NumGPoints )
-            rValues.resize(NumGPoints);
-
-        for ( unsigned int i = 0;  i < NumGPoints; i++ )
-        {
-            rValues[i] = 0.0;
-        }
-    }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-template< unsigned int TDim, unsigned int TNumNodes >
-void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateOnIntegrationPoints( const Variable<double>& rVariable,std::vector<double>& rOutput,
-                                                                            const ProcessInfo& rCurrentProcessInfo )
-{
-    KRATOS_TRY
 
     if(rVariable == PECLET)
     {
@@ -918,7 +897,7 @@ void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateOnIntegrat
             }
 
             this->CalculatePeclet(Variables, Geom, NormVel, rCurrentProcessInfo, Prop);
-            rOutput[GPoint] = Variables.Peclet;
+            rValues[GPoint] = Variables.Peclet;
         }
     }
     else if(rVariable == FIC_BETA)
@@ -974,7 +953,7 @@ void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateOnIntegrat
             }
 
             this->CalculateFICBeta(Variables);
-            rOutput[GPoint] = Variables.Beta;
+            rValues[GPoint] = Variables.Beta;
         }
     }
     else if(rVariable == CFL_NUMBER)
@@ -1047,7 +1026,13 @@ void TransientConvectionDiffusionFICElement<TDim,TNumNodes>::CalculateOnIntegrat
 
             Variables.Courant = NormVel * delta_time / Variables.lv;
 
-            rOutput[GPoint] = Variables.Courant;
+            rValues[GPoint] = Variables.Courant;
+        }
+    } else {
+
+        for ( unsigned int i = 0;  i < NumGPoints; i++ )
+        {
+            rValues[i] = 0.0;
         }
     }
 
