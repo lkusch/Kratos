@@ -302,8 +302,10 @@ bool& ParallelRuleOfMixturesLaw<TDim>::GetValue(
     rValue = false;
 
     for (auto& p_law : mConstitutiveLaws) {
-        if (p_law->GetValue(rThisVariable, rValue))
+        if (p_law->Has(rThisVariable)) {
+            p_law->GetValue(rThisVariable, rValue);
             break;
+        }
     }
 
     return rValue;
@@ -346,9 +348,23 @@ double& ParallelRuleOfMixturesLaw<TDim>::GetValue(
         const double factor = mCombinationFactors[i_layer];
         ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
 
+        this->VolumetricParticipationTransition(rThisVariable, i_layer, p_law);
+        // KRATOS_WATCH(p_law)
+        // KRATOS_WATCH(i_layer)
+        // if (rThisVariable == DAMAGE) {
+        //     p_law->GetValue(rThisVariable, damage_saved);
+        //     KRATOS_WATCH(damage_saved)
+        // }
         double aux_value;
-        p_law->GetValue(rThisVariable, aux_value);
-        rValue += aux_value * factor;
+        if (rThisVariable == UNIAXIAL_STRESS) {
+            p_law->GetValue(rThisVariable, aux_value);
+            rValue += factor * aux_value;
+        } else {
+            if (p_law->Has(rThisVariable)) {
+                p_law->GetValue(rThisVariable, aux_value);
+                rValue += aux_value;
+            }
+        }
     }
 
     return rValue;
@@ -459,7 +475,8 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
     // We set the value in all layers
 
     for (auto& p_law : mConstitutiveLaws) {
-        p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -476,7 +493,8 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
     // We set the value in all layers
 
     for (auto& p_law : mConstitutiveLaws) {
-        p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -492,10 +510,10 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
 {
     // We set the propotional value in all layers
     for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
-        const double factor = mCombinationFactors[i_layer];
         ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
 
-        p_law->SetValue(rThisVariable, factor * rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -511,10 +529,10 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
 {
     // We set the propotional value in all layers
     for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
-        const double factor = mCombinationFactors[i_layer];
         ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
 
-        p_law->SetValue(rThisVariable, factor * rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -530,10 +548,10 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
 {
     // We set the propotional value in all layers
     for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
-        const double factor = mCombinationFactors[i_layer];
         ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
 
-        p_law->SetValue(rThisVariable, factor * rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -549,10 +567,10 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
 {
     // We set the propotional value in all layers
     for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
-        const double factor = mCombinationFactors[i_layer];
         ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
 
-        p_law->SetValue(rThisVariable, factor * rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -568,10 +586,10 @@ void ParallelRuleOfMixturesLaw<TDim>::SetValue(
 {
     // We set the propotional value in all layers
     for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
-        const double factor = mCombinationFactors[i_layer];
         ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
 
-        p_law->SetValue(rThisVariable, factor * rValue, rCurrentProcessInfo);
+        if (p_law->Has(rThisVariable))
+            p_law->SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
 }
 
@@ -598,8 +616,18 @@ double& ParallelRuleOfMixturesLaw<TDim>::CalculateValue(
 
         rParameterValues.SetMaterialProperties(r_prop);
         double aux_value;
-        p_law->CalculateValue(rParameterValues,rThisVariable, aux_value);
-        rValue += factor * aux_value;
+
+        if (rThisVariable == UNIAXIAL_STRESS) {
+            p_law->CalculateValue(rParameterValues,rThisVariable, aux_value);
+            // KRATOS_WATCH(aux_value)
+            rValue += factor * aux_value;
+        } else {
+            if (p_law->Has(rThisVariable)) {
+                p_law->CalculateValue(rParameterValues,rThisVariable, aux_value);
+                rValue += aux_value;
+            }
+        }
+
     }
 
     // Reset properties
@@ -1150,6 +1178,8 @@ void ParallelRuleOfMixturesLaw<TDim>::CalculateMaterialResponseKirchhoff(Constit
             Properties& r_prop             = *(it_prop_begin + i_layer);
             ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
             const double factor            = mCombinationFactors[i_layer];
+            KRATOS_WATCH("CalculateMatResp")
+            KRATOS_WATCH(factor)
 
             // We rotate to local axes the strain
             noalias(rValues.GetStrainVector()) = prod(voigt_rotation_matrix, strain_vector);
@@ -1471,6 +1501,36 @@ void ParallelRuleOfMixturesLaw<TDim>::CalculateTangentTensor(ConstitutiveLaw::Pa
     }
 }
 
+/***********************************************************************************/
+/***********************************************************************************/
+
+template<unsigned int TDim>
+void ParallelRuleOfMixturesLaw<TDim>::VolumetricParticipationTransition
+(
+        const Variable<double>& rThisVariable,
+        const IndexType Layer,
+        const ConstitutiveLaw::Pointer PLaw
+)
+{
+    KRATOS_WATCH(Layer)
+    double damage_saved;
+    double initial_combination_factor = mInitialCombinationFactor;
+    double final_combination_factor = 0.9;
+    if (Layer == 0){
+        if (rThisVariable == DAMAGE) {
+            PLaw->GetValue(rThisVariable, damage_saved);
+        }
+        // //exp transition
+        // mCombinationFactors[0] = initial_combination_factor * std::exp(damage_saved * std::log(final_combination_factor/initial_combination_factor));
+        // mCombinationFactors[1] = 1.0 - mCombinationFactors[0];
+        // //linear transition
+        // mCombinationFactors[0] = initial_combination_factor * (1.0 - damage_saved) + final_combination_factor * damage_saved;
+        // mCombinationFactors[1] = initial_combination_factor * (1.0 - damage_saved) + (1.0 - final_combination_factor) * damage_saved;
+        //Potencial transition
+        mCombinationFactors[0] = (final_combination_factor - initial_combination_factor)  * std::pow(damage_saved, 3.0) + initial_combination_factor;
+        mCombinationFactors[1] = -(final_combination_factor - initial_combination_factor)  * std::pow(damage_saved, 3.0) + initial_combination_factor;
+    }
+}
 /***********************************************************************************/
 /***********************************************************************************/
 

@@ -662,6 +662,16 @@ public:
         const ConstitutiveLaw::StressMeasure& rStressMeasure
     );
 
+    /**
+     * @brief This function computes the rotation matrix T-> E_loc = T*E_glob in order to rotate the strain
+     * or S_glob = trans(T)S_loc for the stresses
+     */
+    void VolumetricParticipationTransition(
+        const Variable<double>& rThisVariable,
+        const IndexType Layer,
+        const ConstitutiveLaw::Pointer p_law
+    );
+
 protected:
 
     ///@name Protected static Member Variables
@@ -692,6 +702,7 @@ private:
 
     std::vector<ConstitutiveLaw::Pointer> mConstitutiveLaws; /// The vector containing the constitutive laws (must be cloned, the ones contained on the properties can conflict between them)
     std::vector<double> mCombinationFactors;                 /// The vector containing the combination factors of the different layers of the material
+    double mInitialCombinationFactor = 0.5;                 /// The vector containing the combination factors of the different layers of the material
 
     ///@}
     ///@name Private Operators
@@ -717,6 +728,7 @@ private:
         KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, ConstitutiveLaw )
         rSerializer.save("ConstitutiveLaws", mConstitutiveLaws);
         rSerializer.save("CombinationFactors", mCombinationFactors);
+        rSerializer.save("InitialCombinationFactor", mInitialCombinationFactor);
     }
 
     void load(Serializer& rSerializer) override
@@ -724,6 +736,7 @@ private:
         KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, ConstitutiveLaw)
         rSerializer.load("ConstitutiveLaws", mConstitutiveLaws);
         rSerializer.load("CombinationFactors", mCombinationFactors);
+        rSerializer.load("InitialCombinationFactor", mInitialCombinationFactor);
     }
 
 
