@@ -2,11 +2,9 @@ import os
 import json
 
 try:
-    import avro.schema
-    from avro.datafile import DataFileReader, DataFileWriter
-    from avro.io import DatumReader, DatumWriter
+    import fastavro
 except:
-    print("Unable to import AVRO. Please install avro drivers for python.")
+    print("Unable to import AVRO. Please install fastavro drivers for python.")
 
 import KratosMultiphysics
 import KratosMultiphysics.kratos_utilities as kratos_utils
@@ -24,7 +22,6 @@ class AvroOutputProcess(KratosMultiphysics.Process):
         KratosMultiphysics.Process.__init__(self)
 
         model_part_name = settings["model_part_name"].GetString()
-        schema_name = settings["schema_name"].GetString()
         
         self.model_part = model[model_part_name]
         self.schema = None
@@ -33,33 +30,97 @@ class AvroOutputProcess(KratosMultiphysics.Process):
 
         force_generate_schema = False
 
-        # Try to open a existing schema, generate it otherwise
-        # if not os.path.exists(schema_name) or force_generate_schema:
-        with open(schema_name, "w+") as schema_file:
-            schema = self.GenerateSchemaFromProjectParameters()
-            # schema_file.write(schema)
-            json.dump(schema, schema_file)
+        named_schemas = {}
+        sub_schemas = {
+            "kratos.result.type.scalar":{
+                "namespace": "kratos.result.type",
+                "type": "record",
+                "name": "scalar",
+                "fields" : [
+                    {"name":"Value", "type":"double"}
+                ]
+            },
+            "kratos.result.type.array":{
+                "namespace": "kratos.result.type",
+                "type": "record",
+                "name": "array",
+                "fields" : [
+                    {"name":"array", "type": {
+                            "type":"array", "items": "double"
+                        }
+                    }
+                ]
+            },
+            "kratos.result.nodal":{
+                "namespace": "kratos.result",
+                "type": "record",
+                "name": "nodal",
+                "fields": [
+                    {"name":"variable_name", "type":"string"},
+                    {"name":"variable_type", "type":"string"},
+                    {"name":"variable_data", "type": {
+                            "type": "array", "items" : [ 
+                                "double",
+                                "kratos.result.type.array"
+                            ]
+                        }
+                    }
+                ]
+            },
+            "kratos.result.elemental":{
+                "namespace": "kratos.result",
+                "type": "record",
+                "name": "elemental",
+                "fields": [
+                    {"name":"variable_name", "type":"string"},
+                    {"name":"variable_type", "type":"string"},
+                    {"name":"variable_data", "type":
+                        {
+                            "type": "array", "items" : [ 
+                                "double",
+                                "kratos.result.type.array"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+
+        results_schema = {
+            "namespace": "kratos",
+            "type": "record",
+            "name": "result",
+            "fields": [
+                {"name":"time_step", "type":"double"},
+                {"name":"mesh", "type":["null", "double"]},
+                {"name":"nodal_results", "type":[
+                    "null", 
+                    {"type": "array", "items": "kratos.result.nodal"},
+                    {"type": "array", "items": "kratos.result.elemental"}
+                ]}
+            ]
+        }
+
+        for schema in sub_schemas:
+            print("Loading:",schema)
+            fastavro.schema.parse_schema(sub_schemas[schema], named_schemas)
+
+        self.schema = fastavro.schema.parse_schema(results_schema, named_schemas)
         
-        with open(schema_name, "rb") as schema_file:
-            self.schema = avro.schema.parse(schema_file.read())
-        
+        print(self.schema)
+
         # Replace deprecations
         self.TranslateLegacyVariablesAccordingToCurrentStandard(settings, {})
 
-        with DataFileWriter(open(self.settings["output_name"].GetString(), "wb"), DatumWriter(), self.schema, codec = self.codec) as writer:
-            pass
-
-        unsued = {
-            # In the future, this will load the avro drvier from CPP to improve efficiency
-            # self.avro_io = KratosMultiphysics.AvroOutput(self.model_part, settings)
-
-            # Charlie: ???
-            # if settings["save_output_files_in_folder"].GetBool():
-            #     if self.model_part.GetCommunicator().MyPID() == 0:
-            #         folder_name = settings["folder_name"].GetString()
-            #         if not self.model_part.ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
-            #             kratos_utils.DeleteDirectoryIfExisting(folder_name)
-            #     self.model_part.GetCommunicator().GetDataCommunicator().Barrier()
+        self.folder_name = None
+        if "save_output_files_in_folder" in settings and settings["save_output_files_in_folder"].GetBool():
+            if self.model_part.GetCommunicator().MyPID() == 0:
+                self.folder_name = settings["folder_name"].GetString()
+                if not self.model_part.ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
+                    kratos_utils.DeleteDirectoryIfExisting(self.folder_name)
+                if not os.path.isdir(folder_name):
+                    os.mkdir(self.folder_name)
+            self.model_part.GetCommunicator().GetDataCommunicator().Barrier()
 
             # self.output_interval = settings["output_interval"].GetDouble()
             # self.output_control = settings["output_control_type"].GetString()
@@ -67,63 +128,6 @@ class AvroOutputProcess(KratosMultiphysics.Process):
 
             # Charlie: ???
             # self.__ScheduleNextOutput() # required here esp for restart
-        }
-
-    def GenerateSchemaFromProjectParameters(self):
-        schema = {
-            'namespace' : 'kratos',
-            'type': 'record',
-            'name': 'simulation_results',
-            'fields': [
-                {
-                    'name':'time_step', 'type': 'double'
-                },
-                {
-                    'name':'results',
-                    'type':{
-                        'name':'nodal',
-                        'type':'record',
-                        'fields': [{
-                            'name':nodal_solution_step_value.GetString()+"_ARRAY",
-                            'type':{
-                                'type':'array',
-                                'items':'double'
-                            }
-                        } for nodal_solution_step_value in self.settings['postprocess_parameters']['result_file_configuration']['nodal_results']]
-                    }
-                }
-            ]
-        }
-
-        return schema
-
-        unsued = {
-            # Charlie: May be usefull in the future.
-            # # Time step of the record
-            # schema['fields'].append({
-            #     'name':'solution_step_values',
-            #     'type':{
-            #         'type':'array',
-            #         'items':{}
-            #     }
-            # })
-
-            # # Nodal solution step values
-            # nodal_solution_step_data_variables = {
-            #     'name': 'nodal_solution_step_data_variables',
-            #     'type' : {}
-            # }
-            # for nodal_solution_step_value in self.settings['nodal_solution_step_data_variables']:
-            #     nodal_solution_step_data_variables.append("name":nodal_solution_step_value.GetString(), "type":{
-            #         "type": "array", "items": "double"
-            #     })
-
-            # # Nodal data values
-            # for nodal_data_value in self.settings['nodal_data_value_variables']:
-            #     schema[fields].append("name":nodal_data_value.GetString(), "type":{
-            #         "type": "array", "items": "double"
-            #     })
-        }
 
     def TranslateLegacyVariablesAccordingToCurrentStandard(self, settings, deprecations):
         # Defining a string to help the user understand where the warnings come from (in case any is thrown)
@@ -134,15 +138,32 @@ class AvroOutputProcess(KratosMultiphysics.Process):
                 DeprecationManager.ReplaceDeprecatedVariableName(settings, dep['old_name'], dep['new_name'])
 
     def PrintOutput(self):
-        with DataFileWriter(open(self.settings["output_name"].GetString(), "ab+"), DatumWriter()) as writer:
-            object_results = {
-                "time_step": float(self.model_part.ProcessInfo[KratosMultiphysics.STEP]), 
-                "results": {
-                    nodal_solution_step_value.GetString()+"_ARRAY":[node.GetSolutionStepValue(KratosMultiphysics.KratosGlobals.GetVariable(nodal_solution_step_value.GetString())) for node in self.model_part.Nodes] for nodal_solution_step_value in self.settings['postprocess_parameters']['result_file_configuration']['nodal_results']
-                }
-            }
+        output_file = self.settings["output_name"].GetString()
+        
+        if self.folder_name:
+            output_file = os.path.join(self.folder_name, output_file)
+        
+        with open(output_file, "a+b") as out:
+            nodal_results = []
+            
+            for nodal_solution_step_variable in self.settings['postprocess_parameters']['result_file_configuration']['nodal_results']:
+                variable_name = nodal_solution_step_variable.GetString()
+                variable_type = KratosMultiphysics.KratosGlobals.GetVariableType(variable_name)
 
-            writer.append(object_results)
+                nodal_results.append({
+                    "variable_name": variable_name,
+                    "variable_type": variable_type,
+                    "variable_data": [node.GetSolutionStepValue(KratosMultiphysics.KratosGlobals.GetVariable(nodal_solution_step_variable.GetString())) for node in self.model_part.Nodes]
+                })
+
+            records = [{
+                "time_step": float(self.model_part.ProcessInfo[KratosMultiphysics.STEP]),
+                "nodal_results": ("kratos.result.nodal",nodal_results)
+            }]
+
+            print(records)
+
+            fastavro.writer(out, self.schema, records)
     
     def ReadPrint(self):
         with DataFileReader(open(self.settings["output_name"].GetString(), "rb"), DatumReader()) as reader:

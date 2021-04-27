@@ -1,5 +1,8 @@
 from __future__ import print_function, absolute_import, division
 
+import os
+import math
+
 # Importing the Kratos Library
 import KratosMultiphysics
 
@@ -9,9 +12,6 @@ import KratosMultiphysics.avro_output_process as avro_output
 
 from KratosMultiphysics import process_factory
 from KratosMultiphysics.testing.utilities import ReadModelPart
-
-import math
-import os
 
 def GetFilePath(fileName):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), fileName)
@@ -36,7 +36,6 @@ class TestProcesses(KratosUnittest.TestCase):
         settings = KratosMultiphysics.Parameters("""{
             "model_part_name": "Main",
             "output_name": "test_avro_output.avro",
-            "schema_name": "test_avro_schema.avsc",
             "postprocess_parameters": {
                 "result_file_configuration": {
                     "gidpost_flags": {
@@ -66,15 +65,13 @@ class TestProcesses(KratosUnittest.TestCase):
         model_part.CloneTimeStep(1.0)
 
         model_part.ProcessInfo[KratosMultiphysics.STEP] += 1
+
         for node in model_part.Nodes:
             node.SetSolutionStepValue(KratosMultiphysics.PRESSURE, node.Id * 10)
             node.SetSolutionStepValue(KratosMultiphysics.VISCOSITY, -node.Id * 10)
 
         output.PrintOutput()
-
         output.ReadPrint()
-        
-        # schema = output.GenerateSchemaFromProjectParameters()
 
 if __name__ == '__main__':
     KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
