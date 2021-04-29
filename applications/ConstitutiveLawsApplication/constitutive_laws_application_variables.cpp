@@ -1,5 +1,5 @@
-// KRATOS   ___                _   _ _         _   _             __                       _
-//        / __\___  _ __  ___| |_(_) |_ _   _| |_(_)_   _____  / /  __ ___      _____   /_\  _ __  _ __
+// KRATOS ___                _   _ _         _   _             __                       _
+//       / __\___  _ __  ___| |_(_) |_ _   _| |_(_)_   _____  / /  __ ___      _____   /_\  _ __  _ __
 //      / /  / _ \| '_ \/ __| __| | __| | | | __| \ \ / / _ \/ /  / _` \ \ /\ / / __| //_\\| '_ \| '_  |
 //     / /__| (_) | | | \__ \ |_| | |_| |_| | |_| |\ V /  __/ /__| (_| |\ V  V /\__ \/  _  \ |_) | |_) |
 //     \____/\___/|_| |_|___/\__|_|\__|\__,_|\__|_| \_/ \___\____/\__,_| \_/\_/ |___/\_/ \_/ .__/| .__/
@@ -12,6 +12,11 @@
 //                   Riccardo Rossi
 //
 
+// System includes
+
+// External includes
+
+// Project includes
 #include "constitutive_laws_application_variables.h"
 
 namespace Kratos
@@ -35,6 +40,7 @@ KRATOS_CREATE_VARIABLE(bool, ADVANCE_STRATEGY_APPLIED);
 
 // Constitutive laws variables
 KRATOS_CREATE_VARIABLE(bool, INELASTIC_FLAG)
+KRATOS_CREATE_VARIABLE(double, INFINITY_YIELD_STRESS)
 KRATOS_CREATE_VARIABLE(double, YIELD_STRESS_TENSION)
 KRATOS_CREATE_VARIABLE(Vector, PLASTIC_STRAIN_VECTOR)
 KRATOS_CREATE_VARIABLE(Vector, BACK_STRESS_VECTOR)
@@ -78,10 +84,15 @@ KRATOS_CREATE_VARIABLE(Matrix, CAUCHY_STRESS_TENSOR_FIBER)
 KRATOS_CREATE_VARIABLE(Matrix, CAUCHY_STRESS_TENSOR_MATRIX)
 KRATOS_CREATE_VARIABLE(Matrix, GREEN_LAGRANGE_STRAIN_TENSOR_MATRIX)
 KRATOS_CREATE_VARIABLE(Matrix, GREEN_LAGRANGE_STRAIN_TENSOR_FIBER)
+KRATOS_CREATE_VARIABLE(double, EXPONENTIAL_SATURATION_YIELD_STRESS)
 KRATOS_CREATE_VARIABLE(double, ACCUMULATED_PLASTIC_STRAIN)
 KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( EULER_ANGLES)
+KRATOS_CREATE_VARIABLE(Vector, HARDENING_MODULI_VECTOR)
 KRATOS_CREATE_VARIABLE(Vector, LAYER_EULER_ANGLES)
-
+KRATOS_CREATE_VARIABLE(double, OGDEN_BETA_1)
+KRATOS_CREATE_VARIABLE(double, OGDEN_BETA_2)
+KRATOS_CREATE_VARIABLE(Vector, MULTI_LINEAR_ELASTICITY_MODULI)
+KRATOS_CREATE_VARIABLE(Vector, MULTI_LINEAR_ELASTICITY_STRAINS)
 
 // D+D- Damage Constitutive laws variables
 KRATOS_CREATE_VARIABLE(double, DAMAGE_TENSION)

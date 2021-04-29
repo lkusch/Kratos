@@ -1,5 +1,5 @@
-// KRATOS   ___                _   _ _         _   _             __                       _
-//        / __\___  _ __  ___| |_(_) |_ _   _| |_(_)_   _____  / /  __ ___      _____   /_\  _ __  _ __
+// KRATOS ___                _   _ _         _   _             __                       _
+//       / __\___  _ __  ___| |_(_) |_ _   _| |_(_)_   _____  / /  __ ___      _____   /_\  _ __  _ __
 //      / /  / _ \| '_ \/ __| __| | __| | | | __| \ \ / / _ \/ /  / _` \ \ /\ / / __| //_\\| '_ \| '_  |
 //     / /__| (_) | | | \__ \ |_| | |_| |_| | |_| |\ V /  __/ /__| (_| |\ V  V /\__ \/  _  \ |_) | |_) |
 //     \____/\___/|_| |_|___/\__|_|\__|\__,_|\__|_| \_/ \___\____/\__,_| \_/\_/ |___/\_/ \_/ .__/| .__/
@@ -62,6 +62,7 @@ PYBIND11_MODULE(KratosConstitutiveLawsApplication,m)
 
     // Constitutive laws variables
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, INELASTIC_FLAG)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, INFINITY_YIELD_STRESS)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, YIELD_STRESS_TENSION)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, PLASTIC_STRAIN_VECTOR)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, PLASTIC_DEFORMATION_GRADIENT)
@@ -108,12 +109,18 @@ PYBIND11_MODULE(KratosConstitutiveLawsApplication,m)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, CAUCHY_STRESS_TENSOR_MATRIX)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, GREEN_LAGRANGE_STRAIN_TENSOR_MATRIX)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, GREEN_LAGRANGE_STRAIN_TENSOR_FIBER)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, EXPONENTIAL_SATURATION_YIELD_STRESS)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, ACCUMULATED_PLASTIC_STRAIN)
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(m, EULER_ANGLES)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, LAYER_EULER_ANGLES)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, BACK_STRESS_VECTOR)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, BACK_STRESS_TENSOR)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, FRACTURE_ENERGY_DAMAGE_PROCESS)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, HARDENING_MODULI_VECTOR)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, OGDEN_BETA_1)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, OGDEN_BETA_2)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, MULTI_LINEAR_ELASTICITY_MODULI)
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, MULTI_LINEAR_ELASTICITY_STRAINS)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, PLASTIC_DAMAGE_PROPORTION)
 
 
