@@ -1178,8 +1178,8 @@ void ParallelRuleOfMixturesLaw<TDim>::CalculateMaterialResponseKirchhoff(Constit
             Properties& r_prop             = *(it_prop_begin + i_layer);
             ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
             const double factor            = mCombinationFactors[i_layer];
-            KRATOS_WATCH("CalculateMatResp")
-            KRATOS_WATCH(factor)
+            // KRATOS_WATCH("CalculateMatResp")
+            // KRATOS_WATCH(factor)
 
             // We rotate to local axes the strain
             noalias(rValues.GetStrainVector()) = prod(voigt_rotation_matrix, strain_vector);
@@ -1512,24 +1512,30 @@ void ParallelRuleOfMixturesLaw<TDim>::VolumetricParticipationTransition
         const ConstitutiveLaw::Pointer PLaw
 )
 {
-    KRATOS_WATCH(Layer)
-    double damage_saved;
-    double initial_combination_factor = mInitialCombinationFactor;
-    double final_combination_factor = 0.9;
-    if (Layer == 0){
-        if (rThisVariable == DAMAGE) {
-            PLaw->GetValue(rThisVariable, damage_saved);
-        }
-        // //exp transition
-        // mCombinationFactors[0] = initial_combination_factor * std::exp(damage_saved * std::log(final_combination_factor/initial_combination_factor));
-        // mCombinationFactors[1] = 1.0 - mCombinationFactors[0];
-        // //linear transition
-        // mCombinationFactors[0] = initial_combination_factor * (1.0 - damage_saved) + final_combination_factor * damage_saved;
-        // mCombinationFactors[1] = initial_combination_factor * (1.0 - damage_saved) + (1.0 - final_combination_factor) * damage_saved;
-        //Potencial transition
-        mCombinationFactors[0] = (final_combination_factor - initial_combination_factor)  * std::pow(damage_saved, 3.0) + initial_combination_factor;
-        mCombinationFactors[1] = -(final_combination_factor - initial_combination_factor)  * std::pow(damage_saved, 3.0) + initial_combination_factor;
-    }
+    // // KRATOS_WATCH(Layer)
+    // double damage_saved;
+    // double initial_combination_factor = mInitialCombinationFactor;
+    // double final_combination_factor = 1.0;
+    // if (Layer == 0){
+    //     // if (rThisVariable == DAMAGE) {
+    //     //     PLaw->GetValue(rThisVariable, damage_saved);
+    //     if (rThisVariable == DAMAGE_DISSIPATION) {
+    //         PLaw->GetValue(rThisVariable, damage_saved);
+    //         KRATOS_WATCH(damage_saved)
+    //         // //exp transition
+    //         // mCombinationFactors[0] = initial_combination_factor * std::exp(damage_saved * std::log(final_combination_factor/initial_combination_factor));
+    //         // mCombinationFactors[1] = 1.0 - mCombinationFactors[0];
+    //         //linear transition
+    //         // mCombinationFactors[0] = initial_combination_factor * (1.0 - damage_saved) + final_combination_factor * damage_saved;
+    //         // mCombinationFactors[1] = (1.0 - initial_combination_factor) * (1.0 - damage_saved) + (1.0 - final_combination_factor) * damage_saved;
+    //         // //Potencial transition
+    //         // mCombinationFactors[0] = (final_combination_factor - initial_combination_factor) * std::pow(damage_saved, 3.0) + initial_combination_factor;
+    //         // mCombinationFactors[1] = (initial_combination_factor - final_combination_factor) * std::pow(damage_saved, 3.0) + (1.0 - initial_combination_factor);
+    //         // //INVERSE Potencial transition
+    //         mCombinationFactors[0] = (final_combination_factor - initial_combination_factor) * std::pow(damage_saved - 1.0, 3.0) + final_combination_factor;
+    //         mCombinationFactors[1] = (initial_combination_factor - final_combination_factor)  * std::pow(damage_saved - 1.0, 3.0) + (1.0 - final_combination_factor);
+    //     }
+    // }
 }
 /***********************************************************************************/
 /***********************************************************************************/

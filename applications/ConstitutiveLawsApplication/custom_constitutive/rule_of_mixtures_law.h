@@ -702,7 +702,7 @@ private:
 
     std::vector<ConstitutiveLaw::Pointer> mConstitutiveLaws; /// The vector containing the constitutive laws (must be cloned, the ones contained on the properties can conflict between them)
     std::vector<double> mCombinationFactors;                 /// The vector containing the combination factors of the different layers of the material
-    double mInitialCombinationFactor = 0.5;                 /// The vector containing the combination factors of the different layers of the material
+    double mInitialCombinationFactor = 0.7;                 /// The vector containing the combination factors of the different layers of the material
 
     ///@}
     ///@name Private Operators
