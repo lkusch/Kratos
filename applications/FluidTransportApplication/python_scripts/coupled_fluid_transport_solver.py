@@ -8,7 +8,8 @@ import KratosMultiphysics
 # Importing the base class
 from KratosMultiphysics.ConvectionDiffusionApplication.coupled_fluid_thermal_solver import CoupledFluidThermalSolver
 from KratosMultiphysics.python_solver import PythonSolver
-from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
+# from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
+# import KratosMultiphysics.CompressiblePotentialFlowApplication as KCPFApp
 
 from importlib import import_module
 
@@ -26,7 +27,9 @@ class CoupledFluidTransportSolver(CoupledFluidThermalSolver):
         ## Get domain size
         self.domain_size = self.settings["domain_size"].GetInt()
 
-        self.fluid_solver = python_solvers_wrapper_fluid.CreateSolverByParameters(self.model, self.settings["fluid_solver_settings"],"OpenMP")
+        # self.fluid_solver = python_solvers_wrapper_fluid.CreateSolverByParameters(self.model, self.settings["fluid_solver_settings"],"OpenMP")
+        module_full = 'KratosMultiphysics.CompressiblePotentialFlowApplication.' + 'potential_flow_solver'
+        self.fluid_solver = import_module(module_full).CreateSolver(self.model, self.settings["fluid_solver_settings"])
 
         python_module_name = "KratosMultiphysics.FluidTransportApplication"
         full_module_name = python_module_name + "." + self.settings["thermal_solver_settings"]["solver_type"].GetString()
@@ -43,10 +46,13 @@ class CoupledFluidTransportSolver(CoupledFluidThermalSolver):
             "domain_size" : -1,
             "echo_level": 0,
             "fluid_solver_settings": {
-                "solver_type": "navier_stokes_solver_vmsmonolithic",
+                "solver_type": "potential_flow",
                 "model_import_settings": {
                     "input_type": "mdpa",
                     "input_filename": "unknown_name"
+                },
+                "formulation": {
+                    "element_type": "incompressible"
                 }
             },
             "thermal_solver_settings": {

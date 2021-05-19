@@ -153,6 +153,29 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::FinalizeSolutionStep(con
         ComputePotentialJump(rCurrentProcessInfo);
     }
     ComputeElementInternalEnergy();
+
+    if(rCurrentProcessInfo[NODAL_SMOOTHING] == true)
+    {
+        // Triangle_2d_3 or Tetrahedra_3d_4 with GI_GAUSS_1
+
+        array_1d<double, 3> gp_velocity(3, 0.0);
+        array_1d<double, Dim> vaux = PotentialFlowUtilities::ComputeVelocity<Dim,NumNodes>(*this);
+        for (unsigned int k = 0; k < Dim; k++){
+            gp_velocity[k] = vaux[k];
+        }
+
+        GeometryType& rGeom = this->GetGeometry();
+        const double& Area = rGeom.Area();
+
+        for(unsigned int i = 0; i < NumNodes; i++) //TNumNodes
+        {
+            rGeom[i].SetLock();
+            noalias(rGeom[i].FastGetSolutionStepValue(VELOCITY)) += gp_velocity*Area;
+            rGeom[i].FastGetSolutionStepValue(NODAL_AREA) += Area;
+            rGeom[i].UnSetLock();
+        }
+    }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
