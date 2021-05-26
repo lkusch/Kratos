@@ -254,8 +254,8 @@ namespace Kratos {
     }
 
     void DEM_Beam::CalculateNormalForces(double LocalElasticContactForce[3],
-                                                       const double kn_el,
-                                                       double indentation) {
+                                         const double kn_el,
+                                         double indentation) {
 
         KRATOS_TRY
 
@@ -265,11 +265,11 @@ namespace Kratos {
     }
 
     void DEM_Beam::CalculateTangentialForces(double OldLocalElasticContactForce[3],
-                                                           double LocalElasticContactForce[3],
-                                                           double LocalDeltDisp[3],
-                                                           double LocalRelVel[3],
-                                                           const double kt_el_0,
-                                                           const double kt_el_1) {
+                                             double LocalElasticContactForce[3],
+                                             double LocalDeltDisp[3],
+                                             double LocalRelVel[3],
+                                             const double kt_el_0,
+                                             const double kt_el_1) {
 
         KRATOS_TRY
 
@@ -280,10 +280,10 @@ namespace Kratos {
     }
 
     void DEM_Beam::CalculateViscoDamping(double LocalRelVel[3],
-                                                       double ViscoDampingLocalContactForce[3],
-                                                       double equiv_visco_damp_coeff_normal,
-                                                       double equiv_visco_damp_coeff_tangential_0,
-                                                       double equiv_visco_damp_coeff_tangential_1) {
+                                         double ViscoDampingLocalContactForce[3],
+                                         double equiv_visco_damp_coeff_normal,
+                                         double equiv_visco_damp_coeff_tangential_0,
+                                         double equiv_visco_damp_coeff_tangential_1) {
 
         KRATOS_TRY
 
@@ -295,15 +295,15 @@ namespace Kratos {
     }
 
     void DEM_Beam::ComputeParticleRotationalMoments(SphericContinuumParticle* element,
-                                                                  SphericContinuumParticle* neighbor,
-                                                                  double equiv_young,
-                                                                  double distance,
-                                                                  double calculation_area,
-                                                                  double LocalCoordSystem[3][3],
-                                                                  double ElasticLocalRotationalMoment[3],
-                                                                  double ViscoLocalRotationalMoment[3],
-                                                                  double equiv_poisson,
-                                                                  double indentation) {
+                                                    SphericContinuumParticle* neighbor,
+                                                    double equiv_young,
+                                                    double distance,
+                                                    double calculation_area,
+                                                    double LocalCoordSystem[3][3],
+                                                    double ElasticLocalRotationalMoment[3],
+                                                    double ViscoLocalRotationalMoment[3],
+                                                    double equiv_poisson,
+                                                    double indentation) {
 
         KRATOS_TRY
 
