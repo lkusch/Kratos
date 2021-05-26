@@ -146,14 +146,15 @@ namespace Kratos {
     DEM_Beam::~DEM_Beam() {}
 
     void DEM_Beam::CalculateElasticConstants(double& kn_el,
-                                                           double& kt_el_0,
-                                                           double& kt_el_1,
-                                                           double initial_dist,
-                                                           double equiv_young,
-                                                           double equiv_poisson,
-                                                           double calculation_area,
-                                                           SphericContinuumParticle* element1,
-                                                           SphericContinuumParticle* element2) {
+                                             double& kt_el_0,
+                                             double& kt_el_1,
+                                             double initial_dist,
+                                             double equiv_young,
+                                             double equiv_poisson,
+                                             double calculation_area,
+                                             SphericContinuumParticle* element1,
+                                             SphericContinuumParticle* element2,
+                                             double indentation) {
 
         KRATOS_TRY
 
@@ -169,13 +170,13 @@ namespace Kratos {
     }
 
     void DEM_Beam::CalculateViscoDampingCoeff(double& equiv_visco_damp_coeff_normal,
-                                                            double& equiv_visco_damp_coeff_tangential_0,
-                                                            double& equiv_visco_damp_coeff_tangential_1,
-                                                            SphericContinuumParticle* element1,
-                                                            SphericContinuumParticle* element2,
-                                                            const double kn_el,
-                                                            const double kt_el_0,
-                                                            const double kt_el_1) {
+                                              double& equiv_visco_damp_coeff_tangential_0,
+                                              double& equiv_visco_damp_coeff_tangential_1,
+                                              SphericContinuumParticle* element1,
+                                              SphericContinuumParticle* element2,
+                                              const double kn_el,
+                                              const double kt_el_0,
+                                              const double kt_el_1) {
 
         KRATOS_TRY
 
@@ -194,32 +195,32 @@ namespace Kratos {
     }
 
     void DEM_Beam::CalculateForces(const ProcessInfo& r_process_info,
-                                                 double OldLocalElasticContactForce[3],
-                                                 double LocalElasticContactForce[3],
-                                                 double LocalElasticExtraContactForce[3],
-                                                 double LocalCoordSystem[3][3],
-                                                 double LocalDeltDisp[3],
-                                                 const double kn_el,
-                                                 const double kt_el_0,
-                                                 const double kt_el_1,
-                                                 double& contact_sigma,
-                                                 double& contact_tau,
-                                                 double& failure_criterion_state,
-                                                 double equiv_young,
-                                                 double equiv_shear,
-                                                 double indentation,
-                                                 double calculation_area,
-                                                 double& acumulated_damage,
-                                                 SphericContinuumParticle* element1,
-                                                 SphericContinuumParticle* element2,
-                                                 int i_neighbour_count,
-                                                 int time_steps,
-                                                 bool& sliding,
-                                                 double &equiv_visco_damp_coeff_normal,
-                                                 double &equiv_visco_damp_coeff_tangential_0,
-                                                 double &equiv_visco_damp_coeff_tangential_1,
-                                                 double LocalRelVel[3],
-                                                 double ViscoDampingLocalContactForce[3]) {
+                                   double OldLocalElasticContactForce[3],
+                                   double LocalElasticContactForce[3],
+                                   double LocalElasticExtraContactForce[3],
+                                   double LocalCoordSystem[3][3],
+                                   double LocalDeltDisp[3],
+                                   const double kn_el,
+                                   const double kt_el_0,
+                                   const double kt_el_1,
+                                   double& contact_sigma,
+                                   double& contact_tau,
+                                   double& failure_criterion_state,
+                                   double equiv_young,
+                                   double equiv_shear,
+                                   double indentation,
+                                   double calculation_area,
+                                   double& acumulated_damage,
+                                   SphericContinuumParticle* element1,
+                                   SphericContinuumParticle* element2,
+                                   int i_neighbour_count,
+                                   int time_steps,
+                                   bool& sliding,
+                                   double &equiv_visco_damp_coeff_normal,
+                                   double &equiv_visco_damp_coeff_tangential_0,
+                                   double &equiv_visco_damp_coeff_tangential_1,
+                                   double LocalRelVel[3],
+                                   double ViscoDampingLocalContactForce[3]) {
 
         KRATOS_TRY
 
