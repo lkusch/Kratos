@@ -177,7 +177,8 @@ namespace Kratos
 							if (Length < mElemSize) mElemSize = Length;
 						}
 					mElemSize = sqrt(mElemSize);
-					ielem->GetValue(MEAN_SIZE) = mElemSize;
+					ielem->SetValue(MEAN_SIZE,mElemSize);
+					// ielem->GetValue(MEAN_SIZE) = mElemSize;
 				}
 			}
 
@@ -285,7 +286,8 @@ namespace Kratos
 	        IteratorType it_end                =  rElements.end();
 	        //const int number_of_elem 		   =   rElements.size();
 
-			typename BinsObjectDynamic<Configure>::Pointer paux = typename BinsObjectDynamic<Configure>::Pointer(new BinsObjectDynamic<Configure>(it_begin, it_end  ) );
+			// typename BinsObjectDynamic<Configure>::Pointer paux = typename BinsObjectDynamic<Configure>::Pointer(new BinsObjectDynamic<Configure>(it_begin, it_end  ) );
+			typename BinsObjectDynamic<Configure>::Pointer paux = typename BinsObjectDynamic<Configure>::Pointer(new BinsObjectDynamic<Configure>(it_begin, it_end, 50.0 ) );
 			paux.swap(mpBinsObjectDynamic);
 			//BinsObjectDynamic<Configure>  mpBinsObjectDynamic(it_begin, it_end );
 
@@ -326,7 +328,9 @@ namespace Kratos
 					vector_mean_velocity *= nodal_weight;
 
 					const double mean_velocity = sqrt ( pow(vector_mean_velocity[0],2) + pow(vector_mean_velocity[1],2) + pow(vector_mean_velocity[2],2) );
-					ielem->GetValue(MEAN_VEL_OVER_ELEM_SIZE) = mean_velocity / (ielem->GetValue(MEAN_SIZE));
+					// ielem->GetValue(MEAN_VEL_OVER_ELEM_SIZE) = mean_velocity / (ielem->GetValue(MEAN_SIZE));
+					double mean_vel_over_elem_size = mean_velocity / (ielem->GetValue(MEAN_SIZE));
+					ielem->SetValue(MEAN_VEL_OVER_ELEM_SIZE,mean_vel_over_elem_size);
 				}
 			}
 			KRATOS_CATCH("")
@@ -1016,6 +1020,8 @@ namespace Kratos
 			const int offset =moffset;
 			const int max_results = 1000;
 
+			// KRATOS_WATCH("DINS PreReseed")
+
 			//tools for the paralelization
 			unsigned int number_of_threads = OpenMPUtils::GetNumThreads();
 			vector<unsigned int> elem_partition;
@@ -1042,9 +1048,10 @@ namespace Kratos
 				BoundedMatrix<double, (TDim+1) , (TDim+1) > N;
 				unsigned int freeparticle=0; //we start with the first position in the particles array
 
+				// KRATOS_WATCH("Abans loop elems dins PreReseed")
 				//int local_id=1;
-				for(unsigned int ii=elem_partition[k]; ii<elem_partition[k+1]; ii++)
-				{
+				for(unsigned int ii=elem_partition[k]; ii<elem_partition[k+1]; ii++) {
+					// KRATOS_WATCH(ii)
 					//const int & elem_id = ielem->Id();
 					ModelPart::ElementsContainerType::iterator ielem = ielembegin+ii;
 					results.resize(max_results);
@@ -1054,9 +1061,10 @@ namespace Kratos
 					int & number_of_particles_in_elem= mnumber_of_particles_in_elems[ii];
 					ParticlePointerVector&  element_particle_pointers =  mvector_of_particle_pointers_vectors[ii];
 					if (number_of_particles_in_elem<(minimum_number_of_particles))// && (ielem->GetGeometry())[0].Y()<0.10 )
-				    	{
+					{
 						//KRATOS_WATCH("elem with little particles")
 						Geometry< Node<3> >& geom = ielem->GetGeometry();
+						// KRATOS_WATCH("Abans ComputeGaussPointPositionsForPreReseed")
 						ComputeGaussPointPositionsForPreReseed(geom, pos, N);
 						//double conductivity = ielem->GetProperties()[CONDUCTIVITY];
 						//KRATOS_WATCH(conductivity);
@@ -1089,6 +1097,7 @@ namespace Kratos
 							Convection_Particle pparticle(pos(j,0),pos(j,1),pos(j,2));
 
 							array_1d<double,TDim+1>aux2_N;
+							// KRATOS_WATCH("Abans CalculatePosition")
 							bool is_found = CalculatePosition(geom,pos(j,0),pos(j,1),pos(j,2),aux2_N);
 							if (is_found==false)
 							{
@@ -1100,21 +1109,25 @@ namespace Kratos
 
 						    ResultIteratorType result_begin = results.begin();
 							Element::Pointer pelement( *ielem.base() );
+							// KRATOS_WATCH("Abans MoveParticle_inverse_way")
 							MoveParticle_inverse_way(pparticle, pelement, result_begin, max_results);
-
+							// KRATOS_WATCH("DESPRES MoveParticle_inverse_way")
 							 //and we copy it to the array:
 							 mparticles_vector[freeparticle] =  pparticle;
+							//  KRATOS_WATCH("DESPRES mparticles_vector[freeparticle]")
 
 							 element_particle_pointers(offset+number_of_particles_in_elem) = &mparticles_vector[freeparticle];
+							//  KRATOS_WATCH("DESPRES element_particle_pointers(offset+number_of_particles_in_elem)")
 							 pparticle.GetEraseFlag()=false;
 
 							number_of_particles_in_elem++;
 
 
-						  }
-					  }
-				  }
+						}
+					}
+				}
 			}
+			// KRATOS_WATCH("DESPRES loop elems dins PreReseed")
 
 
 
@@ -1479,6 +1492,8 @@ namespace Kratos
 		unsigned int nsubsteps;
 		double substep_dt;
 
+		// KRATOS_WATCH("DINS MoveParticle_inverse_way")
+
 
 	    bool KEEP_INTEGRATING=false;
 		bool is_found;
@@ -1495,6 +1510,7 @@ namespace Kratos
 
 		double only_integral  = 0.0 ;
 
+		// KRATOS_WATCH("ABANS FindNodeOnMesh")
 		is_found = FindNodeOnMesh(position, N ,pelement,result_begin,MaxNumberOfResults); //good, now we know where this point is:
 		if(is_found == true)
 		{
@@ -1517,32 +1533,38 @@ namespace Kratos
 			only_integral = 1.0;// weight;//*double(nsubsteps);
 			position -= vel*substep_dt;//weight;
 
+			// KRATOS_WATCH("ABANS loop substeps")
+			// KRATOS_WATCH((nsubsteps-1))
 			for(unsigned int i=0; i<(nsubsteps-1); i++)// this is for the substeps n+1. in the first one we already knew the position of the particle.
-			{ if (KEEP_INTEGRATING==true) {
-				is_found = FindNodeOnMesh(position, N ,pelement,result_begin,MaxNumberOfResults); //good, now we know where this point is:
-				if(is_found == true)
-				{
-					Geometry< Node<3> >& geom = pelement->GetGeometry();//the element we're in
-
-					vel=ZeroVector(3);
-					scalar1=0.0;
-
-
-					for(unsigned int j=0; j<(TDim+1); j++)
+			{ 
+				// KRATOS_WATCH(i)
+				if (KEEP_INTEGRATING==true) {
+					// KRATOS_WATCH("ABANS FindNodeOnMesh")
+					is_found = FindNodeOnMesh(position, N ,pelement,result_begin,MaxNumberOfResults); //good, now we know where this point is:
+					// KRATOS_WATCH("DESPRES FindNodeOnMesh")
+					if(is_found == true)
 					{
-						noalias(vel) += geom[j].FastGetSolutionStepValue(mVelocityVar)*N[j] ;
-						scalar1 +=  geom[j].FastGetSolutionStepValue(mUnknownVar)*N(j);
+						Geometry< Node<3> >& geom = pelement->GetGeometry();//the element we're in
+
+						vel=ZeroVector(3);
+						scalar1=0.0;
+
+
+						for(unsigned int j=0; j<(TDim+1); j++)
+						{
+							noalias(vel) += geom[j].FastGetSolutionStepValue(mVelocityVar)*N[j] ;
+							scalar1 +=  geom[j].FastGetSolutionStepValue(mUnknownVar)*N(j);
+						}
+
+
+						only_integral += 1.0;//weight ; //values saved for the current time step
+						position-=vel*substep_dt;//weight;
 					}
-
-
-					only_integral += 1.0;//weight ; //values saved for the current time step
-					position-=vel*substep_dt;//weight;
-				  }
-				  else KEEP_INTEGRATING=false;
+					else KEEP_INTEGRATING=false;
 				}
-
-
 			}
+
+			// KRATOS_WATCH("DESPRES loop substeps")
 
 			pparticle.GetScalar1()=scalar1;
 		}
@@ -1568,11 +1590,14 @@ namespace Kratos
 		 array_1d<double,TDim+1> aux_N;
 	    //before using the bin to search for possible elements we check first the last element in which the particle was.
 		Geometry<Node<3> >& geom_default = pelement->GetGeometry(); //(*(i))->GetGeometry();
+		// KRATOS_WATCH("DINS FindNodeOnMesh - ABANS CalculatePosition")
 		bool is_found_1 = CalculatePosition(geom_default,coords[0],coords[1],coords[2],N);
+		// KRATOS_WATCH("DINS FindNodeOnMesh - DESPRES CalculatePosition")
 		if(is_found_1 == true) //that was easy!
 		{
 			return true;
 		}
+		// KRATOS_WATCH("DINS FindNodeOnMesh - ABANS GetValue(NEIGHBOUR_ELEMENTS)")
 
 		//to begin with we check the neighbour elements; it is a bit more expensive
 		GlobalPointersVector< Element >& neighb_elems = pelement->GetValue(NEIGHBOUR_ELEMENTS);
@@ -1598,6 +1623,7 @@ namespace Kratos
 		}
 		*/
 		//we check all the neighbour elements
+		// KRATOS_WATCH("DINS FindNodeOnMesh - ABANS loop neighbours")
 		for (unsigned int i=0;i!=(neighb_elems.size());i++)
 		{
 
@@ -1612,24 +1638,34 @@ namespace Kratos
 
 	    //if checking all the neighbour elements did not work, we have to use the bins
 		//ask to the container for the list of candidate elements
+		// KRATOS_WATCH("DINS FindNodeOnMesh - ABANS SearchObjectsInCell")
 		SizeType results_found = mpBinsObjectDynamic->SearchObjectsInCell(Point{coords}, result_begin, MaxNumberOfResults );
 
+		// KRATOS_WATCH("DINS FindNodeOnMesh - ABANS loop candidate elements")
+		// KRATOS_WATCH(*(result_begin))
+		// KRATOS_WATCH(results_found)
+		// KRATOS_ERROR << "Paraaaa" << std::endl;
 		if(results_found>0){
-		//loop over the candidate elements and check if the particle falls within
-		for(SizeType i = 0; i< results_found; i++)
-		{
-			Geometry<Node<3> >& geom = (*(result_begin+i))->GetGeometry();
-
-			//find local position
-			bool is_found = CalculatePosition(geom,coords[0],coords[1],coords[2],N);
-
-			if(is_found == true)
+			//loop over the candidate elements and check if the particle falls within
+			for(SizeType i = 0; i< results_found; i++)
 			{
-				pelement=Element::Pointer((*(result_begin+i)));
-				return true;
+				// KRATOS_WATCH("DINS FindNodeOnMesh - dins loop over the candidate elements - abans (*(result_begin+i))->GetGeometry()")
+				Geometry<Node<3> >& geom = (*(result_begin+i))->GetGeometry();
+				// KRATOS_WATCH("DINS FindNodeOnMesh - dins loop over the candidate elements - despres (*(result_begin+i))->GetGeometry()")
+
+				//find local position
+				// KRATOS_WATCH("DINS FindNodeOnMesh - ABANS CalculatePosition")
+				bool is_found = CalculatePosition(geom,coords[0],coords[1],coords[2],N);
+				// KRATOS_WATCH("DINS FindNodeOnMesh - DESPRES CalculatePosition")
+				if(is_found == true)
+				{
+					// KRATOS_WATCH("DINS FindNodeOnMesh - DINS is_found == true")
+					pelement=Element::Pointer((*(result_begin+i)));
+					return true;
+				}
 			}
 		}
-	}
+		// KRATOS_WATCH("DINS FindNodeOnMesh - FINAL - return false")
 		//if nothing worked, then:
 		//not found case
 		return false;

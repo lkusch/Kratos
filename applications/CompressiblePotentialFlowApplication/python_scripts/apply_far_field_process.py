@@ -56,6 +56,65 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         if(self.perturbation_field):
             self.initialize_flow_field = False
 
+        # TODO: create tables
+        self.u_inf_table = KratosMultiphysics.PiecewiseLinearTable()
+        self.u_inf_table.AddRow(0.0000,0.9583)
+        self.u_inf_table.AddRow(1800.0000,0.9583)
+        self.u_inf_table.AddRow(5400.0000,0.7500)
+        self.u_inf_table.AddRow(9000.0000,0.7083)
+        self.u_inf_table.AddRow(12600.0000,0.6528)
+        self.u_inf_table.AddRow(16200.0000,0.9583)
+        self.u_inf_table.AddRow(19800.0000,1.1528)
+        self.u_inf_table.AddRow(23400.0000,1.0000)
+        self.u_inf_table.AddRow(27000.0000,1.9444)
+        self.u_inf_table.AddRow(30600.0000,2.4028)
+        self.u_inf_table.AddRow(34200.0000,3.2500)
+        self.u_inf_table.AddRow(37800.0000,3.6528)
+        self.u_inf_table.AddRow(41400.0000,4.5972)
+        self.u_inf_table.AddRow(45000.0000,4.7500)
+        self.u_inf_table.AddRow(48600.0000,4.9583)
+        self.u_inf_table.AddRow(52200.0000,5.5972)
+        self.u_inf_table.AddRow(55800.0000,5.7500)
+        self.u_inf_table.AddRow(59400.0000,5.4444)
+        self.u_inf_table.AddRow(63000.0000,4.2083)
+        self.u_inf_table.AddRow(66600.0000,3.7500)
+        self.u_inf_table.AddRow(70200.0000,2.0556)
+        self.u_inf_table.AddRow(73800.0000,0.8472)
+        self.u_inf_table.AddRow(77400.0000,2.8056)
+        self.u_inf_table.AddRow(81000.0000,2.7083)
+        self.u_inf_table.AddRow(84600.0000,3.2500)
+        self.u_inf_table.AddRow(86400.0000,3.2500)
+        self.fluid_model_part.AddTable(1, self.u_inf_table)
+
+        self.angle_of_attack_table = KratosMultiphysics.PiecewiseLinearTable()
+        self.angle_of_attack_table.AddRow(0.0000,2.5133)
+        self.angle_of_attack_table.AddRow(1800.0000,2.5133)
+        self.angle_of_attack_table.AddRow(5400.0000,3.3598)
+        self.angle_of_attack_table.AddRow(9000.0000,3.4121)
+        self.angle_of_attack_table.AddRow(12600.0000,2.8100)
+        self.angle_of_attack_table.AddRow(16200.0000,3.3947)
+        self.angle_of_attack_table.AddRow(19800.0000,3.2289)
+        self.angle_of_attack_table.AddRow(23400.0000,2.7314)
+        self.angle_of_attack_table.AddRow(27000.0000,2.1118)
+        self.angle_of_attack_table.AddRow(30600.0000,0.9163)
+        self.angle_of_attack_table.AddRow(34200.0000,0.6109)
+        self.angle_of_attack_table.AddRow(37800.0000,0.5411)
+        self.angle_of_attack_table.AddRow(41400.0000,0.5061)
+        self.angle_of_attack_table.AddRow(45000.0000,0.4538)
+        self.angle_of_attack_table.AddRow(48600.0000,0.5672)
+        self.angle_of_attack_table.AddRow(52200.0000,0.4102)
+        self.angle_of_attack_table.AddRow(55800.0000,0.5323)
+        self.angle_of_attack_table.AddRow(59400.0000,0.5585)
+        self.angle_of_attack_table.AddRow(63000.0000,0.4800)
+        self.angle_of_attack_table.AddRow(66600.0000,0.4363)
+        self.angle_of_attack_table.AddRow(70200.0000,0.5585)
+        self.angle_of_attack_table.AddRow(73800.0000,2.6354)
+        self.angle_of_attack_table.AddRow(77400.0000,3.7612)
+        self.angle_of_attack_table.AddRow(81000.0000,3.6303)
+        self.angle_of_attack_table.AddRow(84600.0000,3.2987)
+        self.angle_of_attack_table.AddRow(86400.0000,3.2987)
+        self.fluid_model_part.AddTable(2, self.angle_of_attack_table)
+
         # Computing free stream velocity
         self.u_inf = self.free_stream_mach * self.free_stream_speed_of_sound
         self.free_stream_velocity = KratosMultiphysics.Vector(3)
@@ -74,8 +133,22 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         self.fluid_model_part.ProcessInfo.SetValue(CPFApp.UPWIND_FACTOR_CONSTANT,self.upwind_factor_constant)
 
     def ExecuteInitializeSolutionStep(self):
-        far_field_process=CPFApp.ApplyFarFieldProcess(self.far_field_model_part, self.inlet_potential_0, self.initialize_flow_field, self.perturbation_field)
-        far_field_process.Execute()
+        # TODO: read angle_of_attack and free_stream_mach from a table
+        step = self.fluid_model_part.ProcessInfo[KratosMultiphysics.STEP]
+        if step%1000 == 1:
+            time = self.fluid_model_part.ProcessInfo[KratosMultiphysics.TIME]
+            self.u_inf = self.u_inf_table.GetValue(time)
+            self.angle_of_attack = self.angle_of_attack_table.GetValue(time)
+            # self.u_inf = self.u_inf * 1.0e-3
+
+            self.free_stream_velocity = KratosMultiphysics.Vector(3)
+            self.free_stream_velocity[0] = round(self.u_inf*math.cos(self.angle_of_attack),8)
+            self.free_stream_velocity[1] = round(self.u_inf*math.sin(self.angle_of_attack),8)
+            self.free_stream_velocity[2] = 0.0
+            self.fluid_model_part.ProcessInfo.SetValue(CPFApp.FREE_STREAM_VELOCITY,self.free_stream_velocity)
+
+            far_field_process=CPFApp.ApplyFarFieldProcess(self.far_field_model_part, self.inlet_potential_0, self.initialize_flow_field, self.perturbation_field)
+            far_field_process.Execute()
 
         # self.Execute()
 

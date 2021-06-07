@@ -9,7 +9,7 @@ import KratosMultiphysics
 from KratosMultiphysics.ConvectionDiffusionApplication.coupled_fluid_thermal_solver import CoupledFluidThermalSolver
 from KratosMultiphysics.python_solver import PythonSolver
 # from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
-# import KratosMultiphysics.CompressiblePotentialFlowApplication as KCPFApp
+import KratosMultiphysics.CompressiblePotentialFlowApplication as KCPFApp
 
 from importlib import import_module
 

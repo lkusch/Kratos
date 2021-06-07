@@ -207,8 +207,8 @@ class FluidTransportReplaceSolver(FluidTransportSolver):
                     if(self.settings["solution_type"].GetString() == "Steady"):
                         self.settings["element_replace_settings"]["element_name"].SetString("SteadyConvectionDiffusionFICElement2D3N")
                     elif(self.settings["scheme_type"].GetString() == "Implicit"):
-                        self.settings["element_replace_settings"]["element_name"].SetString("TransientConvectionDiffusionFICElement2D3N")
-                        # self.settings["element_replace_settings"]["element_name"].SetString("TransientConvectionDiffusionPFEM2FICElement2D3N")
+                        # self.settings["element_replace_settings"]["element_name"].SetString("TransientConvectionDiffusionFICElement2D3N")
+                        self.settings["element_replace_settings"]["element_name"].SetString("TransientConvectionDiffusionPFEM2FICElement2D3N")
                     else:
                         self.settings["element_replace_settings"]["element_name"].SetString("TransientConvectionDiffusionFICExplicitElement2D3N")
                 else:

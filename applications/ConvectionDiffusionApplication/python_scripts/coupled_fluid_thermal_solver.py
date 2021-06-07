@@ -7,6 +7,8 @@ import KratosMultiphysics
 # Import applications
 import KratosMultiphysics.FluidDynamicsApplication as KratosCFD
 import KratosMultiphysics.ConvectionDiffusionApplication as ConvDiff
+import KratosMultiphysics.CompressiblePotentialFlowApplication as KCPFApp
+import KratosMultiphysics.FluidTransportApplication as KratosFluidTransport
 
 # Importing the base class
 from KratosMultiphysics.python_solver import PythonSolver
@@ -54,8 +56,11 @@ class CoupledFluidThermalSolver(PythonSolver):
         ## Get domain size
         self.domain_size = self.settings["domain_size"].GetInt()
 
-        from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
-        self.fluid_solver = python_solvers_wrapper_fluid.CreateSolverByParameters(self.model, self.settings["fluid_solver_settings"],"OpenMP")
+        # from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
+        # self.fluid_solver = python_solvers_wrapper_fluid.CreateSolverByParameters(self.model, self.settings["fluid_solver_settings"],"OpenMP")
+        from importlib import import_module
+        module_full = 'KratosMultiphysics.CompressiblePotentialFlowApplication.' + 'potential_flow_solver'
+        self.fluid_solver = import_module(module_full).CreateSolver(self.model, self.settings["fluid_solver_settings"])
 
         from KratosMultiphysics.ConvectionDiffusionApplication import python_solvers_wrapper_convection_diffusion
         self.thermal_solver = python_solvers_wrapper_convection_diffusion.CreateSolverByParameters(self.model,self.settings["thermal_solver_settings"],"OpenMP")
@@ -68,7 +73,8 @@ class CoupledFluidThermalSolver(PythonSolver):
 
     def ImportModelPart(self):
         # Call the fluid solver to import the model part from the mdpa
-        self.fluid_solver.ImportModelPart()
+        self.thermal_solver.ImportModelPart()
+        # self.fluid_solver.ImportModelPart()
 
         # Save the convection diffusion settings
         convection_diffusion_settings = self.thermal_solver.main_model_part.ProcessInfo.GetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS)
@@ -76,18 +82,20 @@ class CoupledFluidThermalSolver(PythonSolver):
         # Here the fluid model part is cloned to be thermal model part so that the nodes are shared
         modeler = KratosMultiphysics.ConnectivityPreserveModeler()
         if self.domain_size == 2:
-            modeler.GenerateModelPart(self.fluid_solver.main_model_part,
-                                      self.thermal_solver.main_model_part,
+            modeler.GenerateModelPart(self.thermal_solver.main_model_part,
+                                      self.fluid_solver.main_model_part,
                                       "EulerianConvDiff2D",
                                       "ThermalFace2D2N")
         else:
-            modeler.GenerateModelPart(self.fluid_solver.main_model_part,
-                                      self.thermal_solver.main_model_part,
+            modeler.GenerateModelPart(self.thermal_solver.main_model_part,
+                                      self.fluid_solver.main_model_part,
                                       "EulerianConvDiff3D",
                                       "ThermalFace3D3N")
 
         # Set the saved convection diffusion settings to the new thermal model part
         self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
+        self.thermal_solver.main_model_part.ProcessInfo.SetValue(KCPFApp.NODAL_SMOOTHING,True)
+        self.fluid_solver.main_model_part.ProcessInfo.SetValue(KCPFApp.NODAL_SMOOTHING,True)
 
     def PrepareModelPart(self):
         self.fluid_solver.PrepareModelPart()
@@ -133,24 +141,35 @@ class CoupledFluidThermalSolver(PythonSolver):
     def AdvanceInTime(self, current_time):
         #NOTE: the cloning is done ONLY ONCE since the nodes are shared
         new_time = self.fluid_solver.AdvanceInTime(current_time)
+        # new_time = self.thermal_solver.AdvanceInTime(current_time)
         return new_time
 
     def InitializeSolutionStep(self):
-        self.fluid_solver.InitializeSolutionStep()
+        step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
+        if step%1000 == 1:
+            self.fluid_solver.InitializeSolutionStep()
         self.thermal_solver.InitializeSolutionStep()
 
     def Predict(self):
-        self.fluid_solver.Predict()
+        step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
+        if step%1000 == 1:
+            self.fluid_solver.Predict()
         self.thermal_solver.Predict()
 
     def SolveSolutionStep(self):
-        fluid_is_converged = self.fluid_solver.SolveSolutionStep()
+        step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
+        if step%1000 == 1:
+            fluid_is_converged = self.fluid_solver.SolveSolutionStep()
+        else:
+            fluid_is_converged = True
         thermal_is_converged = self.thermal_solver.SolveSolutionStep()
 
         return (fluid_is_converged and thermal_is_converged)
 
     def FinalizeSolutionStep(self):
-        self.fluid_solver.FinalizeSolutionStep()
+        step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
+        if step%1000 == 1:
+            self.fluid_solver.FinalizeSolutionStep()
         self.thermal_solver.FinalizeSolutionStep()
 
     def Solve(self):

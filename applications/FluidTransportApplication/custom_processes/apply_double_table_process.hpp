@@ -78,9 +78,15 @@ public:
         KRATOS_TRY;
         
         const Variable<double>& var = KratosComponents< Variable<double> >::Get(mvariable_name);
-        
+
         const double Time = mr_model_part.GetProcessInfo()[TIME]/mTimeUnitConverter;
+        const double Dt = mr_model_part.GetProcessInfo()[DELTA_TIME]/mTimeUnitConverter;
         double value = mpTable->GetValue(Time);
+        double old_time = Time - Dt;
+        // if (old_time<0.0){
+        //     old_time = 0.0;
+        // }
+        double old_value = mpTable->GetValue(old_time);
         
         const int nnodes = static_cast<int>(mr_model_part.Nodes().size());
 
@@ -94,6 +100,7 @@ public:
                 ModelPart::NodesContainerType::iterator it = it_begin + i;
 
                 it->FastGetSolutionStepValue(var) = value;
+                it->FastGetSolutionStepValue(var,1) = old_value;
             }
         }
 

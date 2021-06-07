@@ -111,7 +111,7 @@ public:
         KRATOS_TRY
 
         mDeltaTime = r_model_part.GetProcessInfo()[DELTA_TIME];
-        r_model_part.GetProcessInfo()[THETA] = mTheta;
+        r_model_part.GetProcessInfo().SetValue(THETA,mTheta);
 
         BaseType::mSchemeIsInitialized = true;
 
@@ -129,7 +129,7 @@ public:
         KRATOS_TRY
 
         mDeltaTime = r_model_part.GetProcessInfo()[DELTA_TIME];
-        r_model_part.GetProcessInfo()[THETA] = mTheta;
+        r_model_part.GetProcessInfo().SetValue(THETA,mTheta);
 
         const ProcessInfo& CurrentProcessInfo = r_model_part.GetProcessInfo();
 

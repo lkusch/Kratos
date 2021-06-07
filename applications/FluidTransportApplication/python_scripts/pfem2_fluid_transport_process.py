@@ -34,6 +34,13 @@ class PFEM2FluidTransportProcess(MoveParticleUtilityProcess):
     #     # Move the particles until the half step predictor
     #     time_step = self.model_part.ProcessInfo.GetValue(KM.DELTA_TIME)
     #     self.model_part.SetValue(KM.DELTA_TIME, time_step * self.crank_nicolson_theta)
+        # print('ABANS super(PFEM2FluidTransportProcess, self).ExecuteInitializeSolutionStep')
+        # for node in self.model_part.Nodes:
+        #     if(node.Id == 35123):
+        #         temp_n = node.GetSolutionStepValue(KM.TEMPERATURE)
+        #         phi_n = node.GetSolutionStepValue(FTA.PHI_THETA)
+        #         print(temp_n)
+        #         print(phi_n)
         super(PFEM2FluidTransportProcess, self).ExecuteInitializeSolutionStep()
     #     self.model_part.SetValue(KM.DELTA_TIME, time_step)
 
