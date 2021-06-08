@@ -351,20 +351,14 @@ double& ParallelRuleOfMixturesLaw<TDim>::GetValue(
         this->VolumetricParticipationTransition(rThisVariable, i_layer, p_law);
         // KRATOS_WATCH(p_law)
         // KRATOS_WATCH(i_layer)
+        // double damage_saved;
         // if (rThisVariable == DAMAGE) {
         //     p_law->GetValue(rThisVariable, damage_saved);
         //     KRATOS_WATCH(damage_saved)
         // }
         double aux_value;
-        if (rThisVariable == UNIAXIAL_STRESS) {
-            p_law->GetValue(rThisVariable, aux_value);
-            rValue += factor * aux_value;
-        } else {
-            if (p_law->Has(rThisVariable)) {
-                p_law->GetValue(rThisVariable, aux_value);
-                rValue += aux_value;
-            }
-        }
+        p_law->GetValue(rThisVariable, aux_value);
+        rValue += factor * aux_value;
     }
 
     return rValue;
@@ -609,27 +603,52 @@ double& ParallelRuleOfMixturesLaw<TDim>::CalculateValue(
     // We combine the value of each layer
     rValue = 0.0;
     const auto it_prop_begin = r_material_properties.GetSubProperties().begin();
-    for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
-        const double factor = mCombinationFactors[i_layer];
-        ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
-        Properties& r_prop = *(it_prop_begin + i_layer);
 
-        rParameterValues.SetMaterialProperties(r_prop);
-        double aux_value;
+    if (rThisVariable == FATIGUE_REDUCTION_FACTOR){
+        for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
+            const double factor = mCombinationFactors[i_layer];
+            ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
+            Properties& r_prop = *(it_prop_begin + i_layer);
 
-        if (rThisVariable == UNIAXIAL_STRESS) {
-            p_law->CalculateValue(rParameterValues,rThisVariable, aux_value);
-            // KRATOS_WATCH(aux_value)
-            rValue += factor * aux_value;
-        } else {
-            if (p_law->Has(rThisVariable)) {
-                p_law->CalculateValue(rParameterValues,rThisVariable, aux_value);
-                rValue += aux_value;
+            rParameterValues.SetMaterialProperties(r_prop);
+            double aux_value;
+
+            if (i_layer == 0){
+                p_law->CalculateValue(rParameterValues,UNIAXIAL_STRESS, aux_value);
+                rValue = aux_value;
             }
         }
+    }else if (rThisVariable == WOHLER_STRESS){
+        for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
+            const double factor = mCombinationFactors[i_layer];
+            ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
+            Properties& r_prop = *(it_prop_begin + i_layer);
 
+            rParameterValues.SetMaterialProperties(r_prop);
+            double aux_value;
+
+            if (i_layer == 1){
+                p_law->CalculateValue(rParameterValues,UNIAXIAL_STRESS, aux_value);
+                rValue = aux_value;
+            }
+        }
+    }else{
+        for (IndexType i_layer = 0; i_layer < mCombinationFactors.size(); ++i_layer) {
+            const double factor = mCombinationFactors[i_layer];
+            ConstitutiveLaw::Pointer p_law = mConstitutiveLaws[i_layer];
+            Properties& r_prop = *(it_prop_begin + i_layer);
+
+            rParameterValues.SetMaterialProperties(r_prop);
+            double aux_value;
+
+            p_law->CalculateValue(rParameterValues,rThisVariable, aux_value);
+            rValue += factor * aux_value;
+            if (rThisVariable == UNIAXIAL_STRESS) {
+                KRATOS_WATCH(aux_value)
+                KRATOS_WATCH(rValue)
+            }
+        }
     }
-
     // Reset properties
     rParameterValues.SetMaterialProperties(r_material_properties);
 
@@ -1512,30 +1531,32 @@ void ParallelRuleOfMixturesLaw<TDim>::VolumetricParticipationTransition
         const ConstitutiveLaw::Pointer PLaw
 )
 {
-    // // KRATOS_WATCH(Layer)
-    // double damage_saved;
-    // double initial_combination_factor = mInitialCombinationFactor;
-    // double final_combination_factor = 1.0;
-    // if (Layer == 0){
-    //     // if (rThisVariable == DAMAGE) {
-    //     //     PLaw->GetValue(rThisVariable, damage_saved);
-    //     if (rThisVariable == DAMAGE_DISSIPATION) {
-    //         PLaw->GetValue(rThisVariable, damage_saved);
-    //         KRATOS_WATCH(damage_saved)
-    //         // //exp transition
-    //         // mCombinationFactors[0] = initial_combination_factor * std::exp(damage_saved * std::log(final_combination_factor/initial_combination_factor));
-    //         // mCombinationFactors[1] = 1.0 - mCombinationFactors[0];
-    //         //linear transition
-    //         // mCombinationFactors[0] = initial_combination_factor * (1.0 - damage_saved) + final_combination_factor * damage_saved;
-    //         // mCombinationFactors[1] = (1.0 - initial_combination_factor) * (1.0 - damage_saved) + (1.0 - final_combination_factor) * damage_saved;
-    //         // //Potencial transition
-    //         // mCombinationFactors[0] = (final_combination_factor - initial_combination_factor) * std::pow(damage_saved, 3.0) + initial_combination_factor;
-    //         // mCombinationFactors[1] = (initial_combination_factor - final_combination_factor) * std::pow(damage_saved, 3.0) + (1.0 - initial_combination_factor);
-    //         // //INVERSE Potencial transition
-    //         mCombinationFactors[0] = (final_combination_factor - initial_combination_factor) * std::pow(damage_saved - 1.0, 3.0) + final_combination_factor;
-    //         mCombinationFactors[1] = (initial_combination_factor - final_combination_factor)  * std::pow(damage_saved - 1.0, 3.0) + (1.0 - final_combination_factor);
-    //     }
-    // }
+    // KRATOS_WATCH(Layer)
+    double damage_saved;
+    double initial_combination_factor = mInitialCombinationFactor;
+    double final_combination_factor = 0.9;
+    if (Layer == 0){
+        if (rThisVariable == DAMAGE) {
+            PLaw->GetValue(rThisVariable, damage_saved);
+        // if (rThisVariable == DAMAGE_DISSIPATION) {
+        //     PLaw->GetValue(rThisVariable, damage_saved);
+            KRATOS_WATCH(damage_saved)
+            // //exp transition
+            // mCombinationFactors[0] = initial_combination_factor * std::exp(damage_saved * std::log(final_combination_factor/initial_combination_factor));
+            // mCombinationFactors[1] = 1.0 - mCombinationFactors[0];
+            //linear transition
+            // mCombinationFactors[0] = initial_combination_factor * (1.0 - damage_saved) + final_combination_factor * damage_saved;
+            // mCombinationFactors[1] = (1.0 - initial_combination_factor) * (1.0 - damage_saved) + (1.0 - final_combination_factor) * damage_saved;
+            //Potencial transition
+            mCombinationFactors[0] = (final_combination_factor - initial_combination_factor) * std::pow(damage_saved, 3.0) + initial_combination_factor;
+            mCombinationFactors[1] = (initial_combination_factor - final_combination_factor) * std::pow(damage_saved, 3.0) + (1.0 - initial_combination_factor);
+            // //INVERSE Potencial transition
+            // mCombinationFactors[0] = (final_combination_factor - initial_combination_factor) * std::pow(damage_saved - 1.0, 3.0) + final_combination_factor;
+            // mCombinationFactors[1] = (initial_combination_factor - final_combination_factor)  * std::pow(damage_saved - 1.0, 3.0) + (1.0 - final_combination_factor);
+            KRATOS_WATCH(mCombinationFactors[0])
+            KRATOS_WATCH(mCombinationFactors[1])
+        }
+    }
 }
 /***********************************************************************************/
 /***********************************************************************************/
