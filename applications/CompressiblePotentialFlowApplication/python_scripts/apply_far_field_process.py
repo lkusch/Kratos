@@ -135,7 +135,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
     def ExecuteInitializeSolutionStep(self):
         # TODO: read angle_of_attack and free_stream_mach from a table
         step = self.fluid_model_part.ProcessInfo[KratosMultiphysics.STEP]
-        if step%1000 == 1:
+        if step%250 == 1:
             time = self.fluid_model_part.ProcessInfo[KratosMultiphysics.TIME]
             self.u_inf = self.u_inf_table.GetValue(time)
             self.angle_of_attack = self.angle_of_attack_table.GetValue(time)

@@ -168,6 +168,7 @@ class PotentialFlowSolver(FluidSolver):
         self.element_has_nodal_properties = False
         #TODO
         self.main_model_part.ProcessInfo.SetValue(KCPFApp.NODAL_SMOOTHING,True)
+        self.main_model_part.ProcessInfo.SetValue(KCPFApp.VELOCITY_HEIGHT_FACTOR,0.9)
 
     def AddVariables(self):
         # Degrees of freedom

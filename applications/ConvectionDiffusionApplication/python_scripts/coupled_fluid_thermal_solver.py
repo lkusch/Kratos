@@ -96,6 +96,8 @@ class CoupledFluidThermalSolver(PythonSolver):
         self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
         self.thermal_solver.main_model_part.ProcessInfo.SetValue(KCPFApp.NODAL_SMOOTHING,True)
         self.fluid_solver.main_model_part.ProcessInfo.SetValue(KCPFApp.NODAL_SMOOTHING,True)
+        self.thermal_solver.main_model_part.ProcessInfo.SetValue(KCPFApp.VELOCITY_HEIGHT_FACTOR,0.9)
+        self.fluid_solver.main_model_part.ProcessInfo.SetValue(KCPFApp.VELOCITY_HEIGHT_FACTOR,0.9)
 
     def PrepareModelPart(self):
         self.fluid_solver.PrepareModelPart()
@@ -146,19 +148,19 @@ class CoupledFluidThermalSolver(PythonSolver):
 
     def InitializeSolutionStep(self):
         step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
-        if step%1000 == 1:
+        if step%250 == 1:
             self.fluid_solver.InitializeSolutionStep()
         self.thermal_solver.InitializeSolutionStep()
 
     def Predict(self):
         step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
-        if step%1000 == 1:
+        if step%250 == 1:
             self.fluid_solver.Predict()
         self.thermal_solver.Predict()
 
     def SolveSolutionStep(self):
         step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
-        if step%1000 == 1:
+        if step%250 == 1:
             fluid_is_converged = self.fluid_solver.SolveSolutionStep()
         else:
             fluid_is_converged = True
@@ -168,7 +170,7 @@ class CoupledFluidThermalSolver(PythonSolver):
 
     def FinalizeSolutionStep(self):
         step = self.thermal_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
-        if step%1000 == 1:
+        if step%250 == 1:
             self.fluid_solver.FinalizeSolutionStep()
         self.thermal_solver.FinalizeSolutionStep()
 

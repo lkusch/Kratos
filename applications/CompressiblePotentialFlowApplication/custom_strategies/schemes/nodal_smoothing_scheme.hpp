@@ -77,11 +77,13 @@ public:
             ModelPart::NodesContainerType::iterator itNode = node_begin + i;
 
             itNode->FastGetSolutionStepValue(NODAL_AREA) = 0.0;
-            array_1d<double,3>& rNodalVelocity = itNode->FastGetSolutionStepValue(VELOCITY);
-            noalias(rNodalVelocity) = ZeroVector(3);
+            array_1d<double,3>& rTransportVelocity = itNode->FastGetSolutionStepValue(VELOCITY);
+            noalias(rTransportVelocity) = ZeroVector(3);
         }
 
         BaseType::FinalizeSolutionStep(rModelPart,A,Dx,b);
+
+        const double& velocity_height_factor = r_model_part.GetProcessInfo()[VELOCITY_HEIGHT_FACTOR];
 
         // Compute smoothed nodal variables
         #pragma omp parallel for
@@ -93,10 +95,13 @@ public:
             if (NodalArea>1.0e-20)
             {
                 const double InvNodalArea = 1.0/NodalArea;
-                array_1d<double,3>& rNodalVelocity = itNode->FastGetSolutionStepValue(VELOCITY);
+                array_1d<double,3>& rTransportVelocity = itNode->FastGetSolutionStepValue(VELOCITY);
+                array_1d<double,3>& rNodalVelocity = itNode->FastGetSolutionStepValue(NODAL_VELOCITY);
+                noalias(rNodalVelocity) = rTransportVelocity;
                 for(unsigned int i = 0; i<3; i++)
                 {
                     rNodalVelocity[i] *= InvNodalArea;
+                    rTransportVelocity[i] *= InvNodalArea * velocity_height_factor;
                 }
             }
         }
