@@ -83,7 +83,7 @@ public:
 
         BaseType::FinalizeSolutionStep(rModelPart,A,Dx,b);
 
-        const double& velocity_height_factor = r_model_part.GetProcessInfo()[VELOCITY_HEIGHT_FACTOR];
+        const double& velocity_height_factor = rModelPart.GetProcessInfo()[VELOCITY_HEIGHT_FACTOR];
 
         // Compute smoothed nodal variables
         #pragma omp parallel for
