@@ -18,6 +18,7 @@
 // Project includes
 #include "utilities/math_utils.h"
 #include "constitutive_laws_application_variables.h"
+#include "contact_structural_mechanics_application_variables.h"
 #include "custom_utilities/tangent_operator_calculator_utility.h"
 #include "custom_constitutive/generic_finite_strain_kinematic_plasticity.h"
 #include "custom_constitutive/constitutive_laws_integrators/generic_finite_strain_constitutive_law_integrator_kinematic_plasticity.h"
@@ -347,7 +348,7 @@ void GenericFiniteStrainKinematicPlasticity<TElasticBehaviourLaw, TConstLawInteg
                 r_constitutive_matrix, rValues, characteristic_length,
                 plastic_strain, back_stress_vector);
 
-            if (plastic_indicator <= std::abs(1.0e-7 * threshold)) { // Elastic case
+            if (plastic_indicator <= std::abs(1.0e-7 * threshold) || rValues.GetProcessInfo()[ACTIVE_SET_CONVERGED] == false) { // Elastic case
                 noalias(r_integrated_stress_vector) = predictive_stress_vector;
             } else { // Plastic case
                 // While loop backward euler
