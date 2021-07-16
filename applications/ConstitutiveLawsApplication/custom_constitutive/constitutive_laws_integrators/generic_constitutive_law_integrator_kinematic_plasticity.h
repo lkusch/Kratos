@@ -197,12 +197,17 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
         BoundedArrayType delta_sigma;
         double plastic_consistency_factor_increment, threshold_indicator;
         BoundedArrayType kin_hard_stress_vector;
-        Matrix tangent_tensor = ZeroMatrix(6,6);
+        Matrix tangent_tensor = rConstitutiveMatrix;
 
         // Backward Euler
         while (is_converged == false && iteration <= max_iter) {
             threshold_indicator = rUniaxialStress - rThreshold;
             plastic_consistency_factor_increment = threshold_indicator * rPlasticDenominator;
+
+            CalculateTangentMatrix(tangent_tensor,kin_hard_stress_vector, rStrainVector, rUniaxialStress, rThreshold,
+                                        rPlasticDenominator, rYieldSurfaceDerivative, rDerivativePlasticPotential, rPlasticDissipation, rPlasticStrainIncrement,
+                                        rConstitutiveMatrix, rValues, CharacteristicLength, rPlasticStrain, rBackStressVector, plastic_consistency_factor_increment);
+
             noalias(rPlasticStrainIncrement) = plastic_consistency_factor_increment * rDerivativePlasticPotential;
             noalias(rPlasticStrain) += rPlasticStrainIncrement;
             noalias(delta_sigma) = prod(rConstitutiveMatrix, rPlasticStrainIncrement);
@@ -214,14 +219,13 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
                                         rPlasticDenominator, rYieldSurfaceDerivative, rDerivativePlasticPotential, rPlasticDissipation, rPlasticStrainIncrement,
                                         rConstitutiveMatrix, rValues, CharacteristicLength, rPlasticStrain, rBackStressVector);
 
-            CalculateTangentMatrix(tangent_tensor, rConstitutiveMatrix, rYieldSurfaceDerivative, rDerivativePlasticPotential, rPlasticDenominator);
-
             if (std::abs(threshold_indicator) <= std::abs(1.0e-4 * rThreshold)) { // Has converged
                 is_converged = true;
             } else {
                 iteration++;
             }
         }
+        noalias(rValues.GetConstitutiveMatrix()) = tangent_tensor;
         KRATOS_WARNING_IF("GenericConstitutiveLawIntegratorKinematicPlasticity", iteration > max_iter) << "Maximum number of iterations in plasticity loop reached..." << std::endl;
     }
 
@@ -235,13 +239,65 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
      */
     static void CalculateTangentMatrix(
         Matrix& rTangent,
-        const Matrix& rElasticMatrix,
-        const array_1d<double, VoigtSize>& rFFluxVector,
-        const array_1d<double, VoigtSize>& rGFluxVector,
-        const double Denominator
+        const BoundedArrayType& rPredictiveStressVector,
+        const Vector& rStrainVector,
+        const double UniaxialStress,
+        const double Threshold,
+        const double PlasticDenominator,
+        const BoundedArrayType& rYieldSurfaceDerivative,
+        const BoundedArrayType& rDerivativePlasticPotential,
+        const double PlasticDissipation,
+        const BoundedArrayType& rPlasticStrainIncrement,
+        const Matrix& rConstitutiveMatrix,
+        ConstitutiveLaw::Parameters& rValues,
+        const double CharacteristicLength,
+        const Vector& rPlasticStrain,
+        const Vector& rBackStressVector,
+        const double PlasticConsistencyFactor
         )
     {
-        rTangent = rElasticMatrix - outer_prod(Vector(prod(rElasticMatrix, rGFluxVector)), Vector(prod(rElasticMatrix, rFFluxVector))) * Denominator;
+        // We make copies of the variables in order to be safe...
+        Vector strain = rStrainVector, Ep = rPlasticStrain, Beta = rBackStressVector;
+        BoundedArrayType stress = rPredictiveStressVector, dF = rYieldSurfaceDerivative, dG = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
+        BoundedArrayType kin_hard_stress_vector;
+        double uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
+        double lambda_dot = PlasticConsistencyFactor;
+
+        // const double perturbation = 1.0e-4*max_strain;
+        Vector dLambda_dE(VoigtSize);
+        Matrix dG_dE(VoigtSize, VoigtSize);
+
+        /* We loop over the components of the strain to compute numerically the
+        derivates... */
+        for (IndexType component = 0; component < VoigtSize; ++component) {
+            double perturbation = 1.0e-8*strain[component];
+            if (std::abs(perturbation) < tolerance) perturbation = 1e-8;
+
+            strain[component] += perturbation;
+            noalias(stress) = prod(rConstitutiveMatrix, strain - Ep);
+            noalias(kin_hard_stress_vector) = stress - rBackStressVector;
+
+            threshold_indicator = CalculatePlasticParameters(kin_hard_stress_vector, strain, uniaxial_stress, threshold,
+                            denom, dF, dG, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
+            if (threshold_indicator > tolerance)
+                lambda_dot = threshold_indicator * denom;
+            else
+                lambda_dot = 0.0;
+
+            // we fill the numerical derivatives...
+            dLambda_dE(component) = (lambda_dot - PlasticConsistencyFactor) / perturbation;
+            for (IndexType row = 0;row < VoigtSize; ++row)
+                dG_dE(row, component) = (dG(row) - rDerivativePlasticPotential(row)) / perturbation;
+
+            // reset the values
+            strain = rStrainVector, Ep = rPlasticStrain, Beta = rBackStressVector;
+            dF = rYieldSurfaceDerivative, dG = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
+            uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
+            lambda_dot = PlasticConsistencyFactor;
+        }
+        // we compute the tangent tensor
+        Matrix aux = IdentityMatrix(VoigtSize) - outer_prod(dLambda_dE, dG) - PlasticConsistencyFactor * dG_dE;
+        noalias(rTangent) = prod(rConstitutiveMatrix, aux);
     }
 
 
