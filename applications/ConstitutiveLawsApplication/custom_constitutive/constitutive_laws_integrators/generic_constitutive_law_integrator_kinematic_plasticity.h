@@ -199,7 +199,7 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
         BoundedArrayType kin_hard_stress_vector;
         Matrix tangent_tensor = rConstitutiveMatrix;
 
-        const bool is_first_step = (rValues.GetProcessInfo()[STEP] == 1) ? true : false;
+        const bool is_first_step = (rValues.GetProcessInfo()[STEP] <= 2) ? true : false;
 
         // Backward Euler
         while (is_converged == false && iteration <= max_iter) {
@@ -274,11 +274,15 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
             // const double perturbation = 1.0e-4*max_strain;
             Vector dLambda_dE(VoigtSize);
             Matrix dG_dE(VoigtSize, VoigtSize);
-            const double perturbation = 1.0e-8*MathUtils<double>::Norm(rStrainVector);
+            // const double perturbation = 1.0e-4*MathUtils<double>::Norm(rStrainVector);
 
             /* We loop over the components of the strain to compute numerically the
             derivates... */
             for (IndexType component = 0; component < VoigtSize; ++component) {
+                double perturbation = 1.0e-4 * rStrainVector(component);
+                if (std::abs(perturbation) < tolerance) {
+                    perturbation = 1.0e-6;
+                }
 
                 strain[component] += perturbation;
                 noalias(stress) = prod(rConstitutiveMatrix, strain - Ep);
@@ -286,13 +290,39 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
 
                 threshold_indicator = CalculatePlasticParameters(kin_hard_stress_vector, strain, uniaxial_stress, threshold,
                                 denom, dF, dG, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
-                if (threshold_indicator > tolerance)
+                if (threshold_indicator > tolerance) {
                     lambda_dot = threshold_indicator * denom;
-                else
-                    lambda_dot = 0.0;
+                } else {
+                    // KRATOS_WATCH(threshold_indicator)
+                    // int iter = 0;
+                    // const double pert_increment = -10.0*perturbation;
+                    // while (threshold_indicator < tolerance) {
+                    //     perturbation += pert_increment;
+                    //     strain[component] += pert_increment;
+                    //     noalias(stress) = prod(rConstitutiveMatrix, strain - Ep);
+                    //     noalias(kin_hard_stress_vector) = stress - rBackStressVector;
+                    //     threshold_indicator = CalculatePlasticParameters(kin_hard_stress_vector, strain, uniaxial_stress, threshold,
+                    //                     denom, dF, dG, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
+                    //     Ep = rPlasticStrain, Beta = rBackStressVector;
+                    //     dF = rYieldSurfaceDerivative, dG = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
+                    //     uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
+                    //     lambda_dot = PlasticConsistencyFactor;
+
+                    //     KRATOS_WATCH(threshold_indicator)
+                    //     iter++;
+                    //     if (iter == 100)
+                    //         break;
+                    // }
+                    lambda_dot = threshold_indicator * denom;
+                }
+
 
                 // we fill the numerical derivatives...
-                dLambda_dE(component) = (lambda_dot - PlasticConsistencyFactor) / perturbation;
+                // if (lambda_dot > tolerance)
+                    dLambda_dE(component) = (lambda_dot - PlasticConsistencyFactor) / perturbation;
+                // else
+                //     dLambda_dE(component) = 0.0;
+
                 for (IndexType row = 0;row < VoigtSize; ++row)
                     dG_dE(row, component) = (dG(row) - rDerivativePlasticPotential(row)) / perturbation;
 
@@ -304,6 +334,7 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
             }
             // we compute the tangent tensor
             Matrix aux = IdentityMatrix(VoigtSize) - outer_prod(dLambda_dE, dG) - PlasticConsistencyFactor * dG_dE;
+            // Matrix aux = IdentityMatrix(VoigtSize) - outer_prod(dLambda_dE, dG);
             noalias(rTangent) = prod(rConstitutiveMatrix, aux);
         } else {
             noalias(rTangent) = (rConstitutiveMatrix);
