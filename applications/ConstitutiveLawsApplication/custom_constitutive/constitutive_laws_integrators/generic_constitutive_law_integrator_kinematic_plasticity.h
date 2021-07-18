@@ -198,6 +198,7 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
         double plastic_consistency_factor_increment, threshold_indicator;
         BoundedArrayType kin_hard_stress_vector;
         Matrix tangent_tensor = rConstitutiveMatrix;
+        double total_lambda = 0.0;
 
         const bool is_first_step = (rValues.GetProcessInfo()[STEP] <= 2) ? true : false;
 
@@ -205,11 +206,14 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
         while (is_converged == false && iteration <= max_iter) {
             threshold_indicator = rUniaxialStress - rThreshold;
             plastic_consistency_factor_increment = threshold_indicator * rPlasticDenominator;
-            
+            total_lambda += plastic_consistency_factor_increment;
+
             if (!is_first_step)
                 CalculateTangentMatrix(tangent_tensor,kin_hard_stress_vector, rStrainVector, rUniaxialStress, rThreshold,
                                             rPlasticDenominator, rYieldSurfaceDerivative, rDerivativePlasticPotential, rPlasticDissipation, rPlasticStrainIncrement,
-                                            rConstitutiveMatrix, rValues, CharacteristicLength, rPlasticStrain, rBackStressVector, plastic_consistency_factor_increment);
+                                            rConstitutiveMatrix, rValues, CharacteristicLength, rPlasticStrain, rBackStressVector, plastic_consistency_factor_increment,
+                                            total_lambda);
+            // total_lambda += plastic_consistency_factor_increment;
 
             noalias(rPlasticStrainIncrement) = plastic_consistency_factor_increment * rDerivativePlasticPotential;
             noalias(rPlasticStrain) += rPlasticStrainIncrement;
@@ -228,6 +232,11 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
                 iteration++;
             }
         }
+        if (!is_first_step)
+            CalculateTangentMatrix(tangent_tensor,kin_hard_stress_vector, rStrainVector, rUniaxialStress, rThreshold,
+                                        rPlasticDenominator, rYieldSurfaceDerivative, rDerivativePlasticPotential, rPlasticDissipation, rPlasticStrainIncrement,
+                                        rConstitutiveMatrix, rValues, CharacteristicLength, rPlasticStrain, rBackStressVector, plastic_consistency_factor_increment,
+                                        total_lambda);
         if (!is_first_step)
             noalias(rValues.GetConstitutiveMatrix()) = tangent_tensor;
         else
@@ -260,81 +269,66 @@ class GenericConstitutiveLawIntegratorKinematicPlasticity
         const double CharacteristicLength,
         const Vector& rPlasticStrain,
         const Vector& rBackStressVector,
-        const double PlasticConsistencyFactor
+        const double PlasticConsistencyFactor,
+        const double TotalPlasticConsistencyFactor
         )
     {
         // We make copies of the variables in order to be safe...
         Vector strain = rStrainVector, Ep = rPlasticStrain, Beta = rBackStressVector;
-        BoundedArrayType stress = rPredictiveStressVector, dF = rYieldSurfaceDerivative, dG = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
-        BoundedArrayType kin_hard_stress_vector;
+        BoundedArrayType stress = rPredictiveStressVector, dF = rYieldSurfaceDerivative, dG_plus = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
+        BoundedArrayType kin_hard_stress_vector, dG_minus = rDerivativePlasticPotential;
         double uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
-        double lambda_dot = PlasticConsistencyFactor;
+        double lambda_dot_plus  = PlasticConsistencyFactor;
+        double lambda_dot_minus = PlasticConsistencyFactor;
+        // const double total_lambda = MathUtils<double>::Norm(Ep);
 
         if (MathUtils<double>::Norm(rStrainVector) > tolerance) {
-            // const double perturbation = 1.0e-4*max_strain;
             Vector dLambda_dE(VoigtSize);
             Matrix dG_dE(VoigtSize, VoigtSize);
-            // const double perturbation = 1.0e-4*MathUtils<double>::Norm(rStrainVector);
 
             /* We loop over the components of the strain to compute numerically the
             derivates... */
             for (IndexType component = 0; component < VoigtSize; ++component) {
-                double perturbation = 1.0e-4 * rStrainVector(component);
+                double perturbation = 1.0e-12 * rStrainVector(component);
                 if (std::abs(perturbation) < tolerance) {
-                    perturbation = 1.0e-6;
+                    perturbation = 1.0e-12;
                 }
 
+                // plus
                 strain[component] += perturbation;
                 noalias(stress) = prod(rConstitutiveMatrix, strain - Ep);
                 noalias(kin_hard_stress_vector) = stress - rBackStressVector;
 
                 threshold_indicator = CalculatePlasticParameters(kin_hard_stress_vector, strain, uniaxial_stress, threshold,
-                                denom, dF, dG, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
-                if (threshold_indicator > tolerance) {
-                    lambda_dot = threshold_indicator * denom;
-                } else {
-                    // KRATOS_WATCH(threshold_indicator)
-                    // int iter = 0;
-                    // const double pert_increment = -10.0*perturbation;
-                    // while (threshold_indicator < tolerance) {
-                    //     perturbation += pert_increment;
-                    //     strain[component] += pert_increment;
-                    //     noalias(stress) = prod(rConstitutiveMatrix, strain - Ep);
-                    //     noalias(kin_hard_stress_vector) = stress - rBackStressVector;
-                    //     threshold_indicator = CalculatePlasticParameters(kin_hard_stress_vector, strain, uniaxial_stress, threshold,
-                    //                     denom, dF, dG, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
-                    //     Ep = rPlasticStrain, Beta = rBackStressVector;
-                    //     dF = rYieldSurfaceDerivative, dG = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
-                    //     uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
-                    //     lambda_dot = PlasticConsistencyFactor;
-
-                    //     KRATOS_WATCH(threshold_indicator)
-                    //     iter++;
-                    //     if (iter == 100)
-                    //         break;
-                    // }
-                    lambda_dot = threshold_indicator * denom;
-                }
-
-
-                // we fill the numerical derivatives...
-                // if (lambda_dot > tolerance)
-                    dLambda_dE(component) = (lambda_dot - PlasticConsistencyFactor) / perturbation;
-                // else
-                //     dLambda_dE(component) = 0.0;
-
-                for (IndexType row = 0;row < VoigtSize; ++row)
-                    dG_dE(row, component) = (dG(row) - rDerivativePlasticPotential(row)) / perturbation;
+                                denom, dF, dG_plus, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
+                lambda_dot_plus = threshold_indicator * denom;
 
                 // reset the values
                 strain = rStrainVector, Ep = rPlasticStrain, Beta = rBackStressVector;
-                dF = rYieldSurfaceDerivative, dG = rDerivativePlasticPotential, Ep_dot = rPlasticStrainIncrement;
+                dF = rYieldSurfaceDerivative, Ep_dot = rPlasticStrainIncrement;
                 uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
-                lambda_dot = PlasticConsistencyFactor;
+
+                // minus
+                strain[component] -= perturbation;
+                noalias(stress) = prod(rConstitutiveMatrix, strain - Ep);
+                noalias(kin_hard_stress_vector) = stress - rBackStressVector;
+
+                threshold_indicator = CalculatePlasticParameters(kin_hard_stress_vector, strain, uniaxial_stress, threshold,
+                                denom, dF, dG_minus, kappa_p, Ep_dot, rConstitutiveMatrix, rValues, CharacteristicLength, Ep, Beta);
+                lambda_dot_minus = threshold_indicator * denom;
+
+                // reset the values
+                strain = rStrainVector, Ep = rPlasticStrain, Beta = rBackStressVector;
+                dF = rYieldSurfaceDerivative, Ep_dot = rPlasticStrainIncrement;
+                uniaxial_stress = UniaxialStress, threshold = Threshold, kappa_p = PlasticDissipation, denom = PlasticDenominator, threshold_indicator = 0.0;
+
+                // we fill the numerical derivatives...
+                dLambda_dE(component) = (lambda_dot_plus - lambda_dot_minus) / (2.0*perturbation);
+                for (IndexType row = 0;row < VoigtSize; ++row)
+                    dG_dE(row, component) = (dG_plus(row) - dG_minus(row)) / (2.0*perturbation);
             }
             // we compute the tangent tensor
-            Matrix aux = IdentityMatrix(VoigtSize) - outer_prod(dLambda_dE, dG) - PlasticConsistencyFactor * dG_dE;
-            // Matrix aux = IdentityMatrix(VoigtSize) - outer_prod(dLambda_dE, dG);
+            Matrix aux = IdentityMatrix(VoigtSize) - outer_prod(dLambda_dE, rDerivativePlasticPotential) - TotalPlasticConsistencyFactor * dG_dE;
             noalias(rTangent) = prod(rConstitutiveMatrix, aux);
         } else {
             noalias(rTangent) = (rConstitutiveMatrix);
