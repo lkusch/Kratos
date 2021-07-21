@@ -83,13 +83,13 @@ class InterfaceSU2():
         if self.interface_parameters["echo_level"].GetInt()>0:
             print("> Start writing mdpa file...")
 
-        self.new_file = open(self.interface_parameters["kratos_related"]["mdpa_file"].GetString(), 'w')
+        self.new_file = open(str(self.interface_parameters["kratos_related"]["mdpa_file"].GetString()), 'w')
 
         self.__WriteHeader()
         self.__WriteNodes()
         if self.interface_parameters["kratos_related"]["write_elements"].GetBool():
             self.__WriteElements()
-        if self.interface_parameters["su2_related"]["design_surface_tag"].GetString() != "None":
+        if str(self.interface_parameters["su2_related"]["design_surface_tag"].GetString()) != "None":
             self.__WriteShapeOptimizationConditions()
             self.__WriteDesignSurfaceAsSubModelPart()
         self.__WriteSubModelPartsWithoutDesignSurface()
@@ -101,7 +101,7 @@ class InterfaceSU2():
 
     # --------------------------------------------------------------------------
     def WriteNodesAsSU2MeshMotionFile(self,kratos_node_set,target_directory = "."):
-        self.new_file = open(os.path.join(target_directory,self.interface_parameters["su2_related"]["mesh_motion_file"].GetString()), 'w')
+        self.new_file = open(os.path.join(target_directory,str(self.interface_parameters["su2_related"]["mesh_motion_file"].GetString())), 'w')
 
         if self.su2_mesh_data["NDIME"] == 2:
             for kratos_node in kratos_node_set:
@@ -133,19 +133,19 @@ class InterfaceSU2():
 
         if os.path.isdir("DESIGNS"):
             shutil.rmtree("DESIGNS")
-
-        su2_config = SU2.io.Config(self.interface_parameters["su2_related"]["config_file"].GetString())
+        su2_config = SU2.io.Config(str(self.interface_parameters["su2_related"]["config_file"].GetString()))
         su2_config.NUMBER_PART = self.interface_parameters["su2_related"]["number_of_cores"].GetInt()
         su2_config.NZONES = self.interface_parameters["su2_related"]["number_of_zones"].GetInt()
-        su2_config.GRADIENT_METHOD= self.interface_parameters["su2_related"]["gradient_method"].GetString()
-
+        su2_config.GRADIENT_METHOD= str(self.interface_parameters["su2_related"]["gradient_method"].GetString())
+ 
         with suppress_stdout():
+            #if self.interface_parameters["echo_level"].GetInt()>0:
             state = SU2.io.State()
             state.find_files(su2_config)
 
             self.project = SU2.opt.Project(su2_config,state)
-            self.project.config["MOTION_FILENAME"] = self.interface_parameters["su2_related"]["mesh_motion_file"].GetString()
-            self.project.state.FILES["MOTION_FILE"] = self.interface_parameters["su2_related"]["mesh_motion_file"].GetString()
+            self.project.config["DV_FILENAME"] = str(self.interface_parameters["su2_related"]["mesh_motion_file"].GetString())
+            self.project.state.FILES["MOTION_FILE"] = str(self.interface_parameters["su2_related"]["mesh_motion_file"].GetString())
 
         if self.interface_parameters["echo_level"].GetInt()>0:
             print("> Finished initializing SU2 project!\n")
@@ -161,12 +161,12 @@ class InterfaceSU2():
     # --------------------------------------------------------------------------
     def ComputeGradient(self, response_id, update_mesh, design_number):
         direct_solution_frequency = self.project.config["WRT_SOL_FREQ"]
-        direct_residual_min = self.project.config["RESIDUAL_MINVAL"]
+        direct_residual_min = self.project.config["CONV_RESIDUAL_MINVAL"]
         direct_restart_option = self.project.config["RESTART_SOL"]
 
         self.project.config["WRT_SOL_FREQ"] = self.interface_parameters["su2_related"]["write_frequency_adjoint_run"].GetInt()
-        self.project.config["RESIDUAL_MINVAL"] = self.interface_parameters["su2_related"]["residual_min_adjoint_run"].GetInt()
-        self.project.config["RESTART_SOL"] = self.interface_parameters["su2_related"]["use_restart_in_adjoint_run"].GetString()
+        self.project.config["CONV_RESIDUAL_MINVAL"] = self.interface_parameters["su2_related"]["residual_min_adjoint_run"].GetInt()
+        self.project.config["RESTART_SOL"] = str(self.interface_parameters["su2_related"]["use_restart_in_adjoint_run"].GetString())
 
         if self.interface_parameters["echo_level"].GetInt()==2:
             su2_gradient = self.project.df(response_id, update_mesh, design_number)
@@ -177,7 +177,7 @@ class InterfaceSU2():
         kratos_gradient = self.__TranslateGradientToKratosFormat(su2_gradient)
 
         self.project.config["WRT_SOL_FREQ"] = direct_solution_frequency
-        self.project.config["RESIDUAL_MINVAL"] = direct_residual_min
+        self.project.config["CONV_RESIDUAL_MINVAL"] = direct_residual_min
         self.project.config["RESTART_SOL"] = direct_restart_option
 
         return kratos_gradient
@@ -235,7 +235,7 @@ class InterfaceSU2():
         self.su2_mesh_data["MARKS"]  = {}
 
         # open meshfile
-        f_tb_read = open(self.interface_parameters["su2_related"]["mesh_file"].GetString(),'r')
+        f_tb_read = open(str(self.interface_parameters["su2_related"]["mesh_file"].GetString()),'r')
 
         # readline helper functin
         def mesh_readlines(n_lines=1):
@@ -597,7 +597,7 @@ class InterfaceSU2():
 
     # --------------------------------------------------------------------------
     def __WriteShapeOptimizationConditions(self):
-        design_surface_tag = self.interface_parameters["su2_related"]["design_surface_tag"].GetString()
+        design_surface_tag = str(self.interface_parameters["su2_related"]["design_surface_tag"].GetString())
 
         # Identify all indices of the specific element types in list of elements on design surface
         line_entries = []
@@ -683,7 +683,7 @@ class InterfaceSU2():
     def __WriteSubModelPartsWithoutDesignSurface(self):
         for mark_tag in self.su2_mesh_data["MARKS"]:
 
-            if mark_tag == self.interface_parameters["su2_related"]["design_surface_tag"].GetString():
+            if mark_tag == str(self.interface_parameters["su2_related"]["design_surface_tag"].GetString()):
                 continue
 
             self.new_file.write("Begin SubModelPart " + mark_tag + "\n")
@@ -697,7 +697,7 @@ class InterfaceSU2():
 
     # --------------------------------------------------------------------------
     def __WriteDesignSurfaceAsSubModelPart(self):
-        design_surface_tag = self.interface_parameters["su2_related"]["design_surface_tag"].GetString()
+        design_surface_tag = str(self.interface_parameters["su2_related"]["design_surface_tag"].GetString())
 
         self.new_file.write("Begin SubModelPart " + design_surface_tag + "\n")
         self.new_file.write("\tBegin SubModelPartNodes\n")

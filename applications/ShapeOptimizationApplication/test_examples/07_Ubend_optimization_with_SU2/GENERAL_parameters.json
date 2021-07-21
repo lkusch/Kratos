@@ -47,6 +47,31 @@
         "point_data_configuration"  : []
     },
     "optimization_settings" : {
+        "model_settings" : {
+            "domain_size"           : 2,
+            "model_part_name"       : "CFD_ubend",
+            "model_import_settings" : {
+                "input_type"     : "mdpa",
+                "input_filename" : "CFD_ubend"
+            },
+            "design_surface_sub_model_part_name" : "BOGEN",
+            "damping" : {
+                "apply_damping"      : true,
+                "max_neighbor_nodes" : 50000,
+                "damping_regions" : [{
+                        "sub_model_part_name"   : "fix_nodes",
+                        "damp_X"                : true,
+                        "damp_Y"                : true,
+                        "damp_Z"                : true,
+                        "damping_function_type" : "cosine",
+                        "damping_radius"        : 0.06
+                    }]
+            },
+            "mesh_motion" : {
+                "apply_mesh_solver" : false,
+                "boundary_conditions_process_list" : []
+            }
+        },
         "objectives" : [{
                 "identifier" : "pressure_loss",
                 "type"       : "minimization",

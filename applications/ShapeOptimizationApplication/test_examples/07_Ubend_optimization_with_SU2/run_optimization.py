@@ -1,5 +1,7 @@
 # Import Kratos core and apps
 from KratosMultiphysics import *
+from KratosMultiphysics.ExternalSolversApplication import *
+from KratosMultiphysics.MeshingApplication import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 from KratosMultiphysics.StructuralMechanicsApplication import *
 from KratosMultiphysics.MappingApplication import *
