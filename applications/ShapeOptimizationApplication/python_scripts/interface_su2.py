@@ -160,11 +160,11 @@ class InterfaceSU2():
 
     # --------------------------------------------------------------------------
     def ComputeGradient(self, response_id, update_mesh, design_number):
-        direct_solution_frequency = self.project.config["WRT_SOL_FREQ"]
+        direct_solution_frequency = self.project.config["OUTPUT_WRT_FREQ"]
         direct_residual_min = self.project.config["CONV_RESIDUAL_MINVAL"]
         direct_restart_option = self.project.config["RESTART_SOL"]
 
-        self.project.config["WRT_SOL_FREQ"] = self.interface_parameters["su2_related"]["write_frequency_adjoint_run"].GetInt()
+        self.project.config["OUTPUT_WRT_FREQ"] = self.interface_parameters["su2_related"]["write_frequency_adjoint_run"].GetInt()
         self.project.config["CONV_RESIDUAL_MINVAL"] = self.interface_parameters["su2_related"]["residual_min_adjoint_run"].GetInt()
         self.project.config["RESTART_SOL"] = str(self.interface_parameters["su2_related"]["use_restart_in_adjoint_run"].GetString())
 
@@ -176,7 +176,7 @@ class InterfaceSU2():
 
         kratos_gradient = self.__TranslateGradientToKratosFormat(su2_gradient)
 
-        self.project.config["WRT_SOL_FREQ"] = direct_solution_frequency
+        self.project.config["OUTPUT_WRT_FREQ"] = direct_solution_frequency
         self.project.config["CONV_RESIDUAL_MINVAL"] = direct_residual_min
         self.project.config["RESTART_SOL"] = direct_restart_option
 

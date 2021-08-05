@@ -51,7 +51,7 @@
             "correction_scaling"      : 0.1,
             "use_adaptive_correction" : true,
             "max_iterations"          : 100,
-            "relative_tolerance"      : 1e-1,
+            "relative_tolerance"      : 1e-2,
             "line_search" : {
                 "line_search_type"           : "manual_stepping",
                 "normalize_search_direction" : true,
@@ -85,7 +85,7 @@
     "su2_interface_settings" : {
         "su2_related": {
             "config_file"                : "inv_NACA0012.cfg",
-            "number_of_cores"            : 8,
+            "number_of_cores"            : 2,
             "gradient_method"            : "DISCRETE_ADJOINT",
             "use_restart_in_adjoint_run" : "YES",
             "mesh_file"          : "mesh_NACA0012_inv.su2",
