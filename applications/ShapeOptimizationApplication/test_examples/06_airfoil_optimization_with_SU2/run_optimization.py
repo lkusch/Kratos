@@ -1,13 +1,24 @@
 # Making KratosMultiphysics backward compatible with python 2.6 and 2.7
 from __future__ import print_function, absolute_import, division
 
+
+import os, pathlib
+
+# Kratos Core and Apps
+#import KratosMultiphysics as KM
+
 # Import Kratos core and apps
 from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 
 # Additional imports
+#from KratosMultiphysics.ShapeOptimizationApplication import optimizer_factory
+#from KratosMultiphysics.ShapeOptimizationApplication.analyzers.analyzer_base import AnalyzerBaseClass
+#from KratosMultiphysics.ShapeOptimizationApplication.interface_su2 import InterfaceSU2
+#from KratosMultiphysics.ShapeOptimizationApplication.analyzer_base import AnalyzerBaseClass
 from interface_su2 import InterfaceSU2
-from analyzer_base import AnalyzerBaseClass
+from analyzers.analyzer_base import AnalyzerBaseClass
+import optimizer_factory
 
 # =======================================================================================================
 # Define external analyzer
@@ -61,6 +72,5 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
 model = Model()
 
 # Create optimizer and perform optimization
-import optimizer_factory
 optimizer = optimizer_factory.CreateOptimizer(parameters["optimization_settings"], model, CustomSU2Analyzer())
 optimizer.Optimize()
