@@ -41,256 +41,279 @@
 namespace Kratos
 {
 
-    ///@name Kratos Globals
-    ///@{
+	///@name Kratos Globals
+	///@{
 
-    // Geometry variables
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(NORMALIZED_SURFACE_NORMAL);
+	// Geometry variables
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, NORMALIZED_SURFACE_NORMAL);
 
     // Optimization variables
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DF1DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DF1DX);
 
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DF1DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DF1DX_MAPPED);
 
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC1DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC2DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC3DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC4DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC5DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC6DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC7DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC8DX);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC9DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC1DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC2DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC3DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC4DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC5DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC6DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC7DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC8DX);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC9DX);
 
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC1DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC2DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC3DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC4DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC5DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC6DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC7DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC8DX_MAPPED);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DC9DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC1DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC2DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC3DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC4DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC5DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC6DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC7DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC8DX_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DC9DX_MAPPED);
 
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(SEARCH_DIRECTION);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(CONTROL_POINT_UPDATE);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(CONTROL_POINT_CHANGE);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(SHAPE_UPDATE);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(SHAPE_CHANGE);
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(MESH_CHANGE);
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, SEARCH_DIRECTION);
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, CORRECTION);
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, CONTROL_POINT_UPDATE);
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, CONTROL_POINT_CHANGE);
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, SHAPE_UPDATE);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, SHAPE_CHANGE);
+    KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, MESH_CHANGE);
 
-    // For edge damping
-    KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(DAMPING_FACTOR);
+	// For edge damping
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, DAMPING_FACTOR);
 
     // For mapping
-    KRATOS_DEFINE_VARIABLE(int,MAPPING_ID);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, int,MAPPING_ID);
 
-    ///@}
-    ///@name Type Definitions
-    ///@{
+	// For bead optimization
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,ALPHA);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,ALPHA_MAPPED);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,DF1DALPHA);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,DF1DALPHA_MAPPED);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,DPDALPHA);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,DPDALPHA_MAPPED);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,DLDALPHA);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, BEAD_DIRECTION);
 
-    ///@}
-    ///@name  Enum's
-    ///@{
+    // For auxiliary operations
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,SCALAR_VARIABLE);
+    KRATOS_DEFINE_APPLICATION_VARIABLE(SHAPE_OPTIMIZATION_APPLICATION, double,SCALAR_VARIABLE_MAPPED);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, VECTOR_VARIABLE);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, VECTOR_VARIABLE_MAPPED);
 
-    ///@}
-    ///@name  Functions
-    ///@{
-
-    ///@}
-    ///@name Kratos Classes
-    ///@{
-
-    /// Short class definition.
-    /** Detail class definition.
-    */
-    class KratosShapeOptimizationApplication : public KratosApplication
-    {
-    public:
-        ///@name Type Definitions
-        ///@{
+	// For in plane mapping operations
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, BACKGROUND_COORDINATE);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, BACKGROUND_NORMAL);
+	KRATOS_DEFINE_3D_APPLICATION_VARIABLE_WITH_COMPONENTS(SHAPE_OPTIMIZATION_APPLICATION, OUT_OF_PLANE_DELTA);
 
 
-        /// Pointer definition of KratosShapeOptimizationApplication
-        KRATOS_CLASS_POINTER_DEFINITION(KratosShapeOptimizationApplication);
+	///@}
+	///@name Type Definitions
+	///@{
 
-        ///@}
-        ///@name Life Cycle
-        ///@{
+	///@}
+	///@name  Enum's
+	///@{
 
-        /// Default constructor.
-        KratosShapeOptimizationApplication();
+	///@}
+	///@name  Functions
+	///@{
 
-        /// Destructor.
-        ~KratosShapeOptimizationApplication() override {}
+	///@}
+	///@name Kratos Classes
+	///@{
 
-
-        ///@}
-        ///@name Operators
-        ///@{
-
-
-        ///@}
-        ///@name Operations
-        ///@{
-
-        void Register() override;
-
-
-
-        ///@}
-        ///@name Access
-        ///@{
+	/// Short class definition.
+	/** Detail class definition.
+	*/
+	class KRATOS_API(SHAPE_OPTIMIZATION_APPLICATION) KratosShapeOptimizationApplication : public KratosApplication
+	{
+	public:
+		///@name Type Definitions
+		///@{
 
 
-        ///@}
-        ///@name Inquiry
-        ///@{
+		/// Pointer definition of KratosShapeOptimizationApplication
+		KRATOS_CLASS_POINTER_DEFINITION(KratosShapeOptimizationApplication);
+
+		///@}
+		///@name Life Cycle
+		///@{
+
+		/// Default constructor.
+		KratosShapeOptimizationApplication();
+
+		/// Destructor.
+		~KratosShapeOptimizationApplication() override {}
 
 
-        ///@}
-        ///@name Input and output
-        ///@{
+		///@}
+		///@name Operators
+		///@{
 
-        /// Turn back information as a string.
-        std::string Info() const override
-        {
-            return "KratosShapeOptimizationApplication";
-        }
 
-        /// Print information about this object.
-        void PrintInfo(std::ostream& rOStream) const override
-        {
-            rOStream << Info();
-            PrintData(rOStream);
-        }
+		///@}
+		///@name Operations
+		///@{
 
-        ///// Print object's data.
+	    void Register() override;
+
+
+
+		///@}
+		///@name Access
+		///@{
+
+
+		///@}
+		///@name Inquiry
+		///@{
+
+
+		///@}
+		///@name Input and output
+		///@{
+
+		/// Turn back information as a string.
+		std::string Info() const override
+		{
+			return "KratosShapeOptimizationApplication";
+		}
+
+		/// Print information about this object.
+		void PrintInfo(std::ostream& rOStream) const override
+		{
+			rOStream << Info();
+			PrintData(rOStream);
+		}
+
+		///// Print object's data.
        void PrintData(std::ostream& rOStream) const override
       {
-          KRATOS_WATCH("in my application");
-          KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size() );
-        rOStream << "Variables:" << std::endl;
-        KratosComponents<VariableData>().PrintData(rOStream);
-        rOStream << std::endl;
-        rOStream << "Elements:" << std::endl;
-        KratosComponents<Element>().PrintData(rOStream);
-        rOStream << std::endl;
-        rOStream << "Conditions:" << std::endl;
-        KratosComponents<Condition>().PrintData(rOStream);
+      	KRATOS_WATCH("in my application");
+      	KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size() );
+		rOStream << "Variables:" << std::endl;
+		KratosComponents<VariableData>().PrintData(rOStream);
+		rOStream << std::endl;
+		rOStream << "Elements:" << std::endl;
+		KratosComponents<Element>().PrintData(rOStream);
+		rOStream << std::endl;
+		rOStream << "Conditions:" << std::endl;
+		KratosComponents<Condition>().PrintData(rOStream);
       }
 
 
-        ///@}
-        ///@name Friends
-        ///@{
+		///@}
+		///@name Friends
+		///@{
 
 
-        ///@}
+		///@}
 
-    protected:
-        ///@name Protected static Member Variables
-        ///@{
-
-
-        ///@}
-        ///@name Protected member Variables
-        ///@{
+	protected:
+		///@name Protected static Member Variables
+		///@{
 
 
-        ///@}
-        ///@name Protected Operators
-        ///@{
+		///@}
+		///@name Protected member Variables
+		///@{
 
 
-        ///@}
-        ///@name Protected Operations
-        ///@{
+		///@}
+		///@name Protected Operators
+		///@{
 
 
-        ///@}
-        ///@name Protected  Access
-        ///@{
+		///@}
+		///@name Protected Operations
+		///@{
 
 
-        ///@}
-        ///@name Protected Inquiry
-        ///@{
+		///@}
+		///@name Protected  Access
+		///@{
 
 
-        ///@}
-        ///@name Protected LifeCycle
-        ///@{
+		///@}
+		///@name Protected Inquiry
+		///@{
 
 
-        ///@}
-
-    private:
-        ///@name Static Member Variables
-        ///@{
+		///@}
+		///@name Protected LifeCycle
+		///@{
 
 
+		///@}
 
-        //       static const ApplicationCondition  msApplicationCondition;
+	private:
+		///@name Static Member Variables
+		///@{
 
-        ///@}
-        ///@name Member Variables
-        ///@{
+
+
+		//       static const ApplicationCondition  msApplicationCondition;
+
+		///@}
+		///@name Member Variables
+		///@{
 
         //conditions
         const ShapeOptimizationCondition mShapeOptimizationCondition3D3N;
-        const ShapeOptimizationCondition mShapeOptimizationCondition3D4N;
+	const ShapeOptimizationCondition mShapeOptimizationCondition3D4N;
         const ShapeOptimizationCondition mShapeOptimizationCondition2D2N;
-        const ShapeOptimizationCondition mShapeOptimizationCondition3D2N;
+	const ShapeOptimizationCondition mShapeOptimizationCondition3D2N;
 
 
-        ///@}
-        ///@name Private Operators
-        ///@{
+		///@}
+		///@name Private Operators
+		///@{
 
 
-        ///@}
-        ///@name Private Operations
-        ///@{
+		///@}
+		///@name Private Operations
+		///@{
 
 
-        ///@}
-        ///@name Private  Access
-        ///@{
+		///@}
+		///@name Private  Access
+		///@{
 
 
-        ///@}
-        ///@name Private Inquiry
-        ///@{
+		///@}
+		///@name Private Inquiry
+		///@{
 
 
-        ///@}
-        ///@name Un accessible methods
-        ///@{
+		///@}
+		///@name Un accessible methods
+		///@{
 
-        /// Assignment operator.
-        KratosShapeOptimizationApplication& operator=(KratosShapeOptimizationApplication const& rOther);
+		/// Assignment operator.
+		KratosShapeOptimizationApplication& operator=(KratosShapeOptimizationApplication const& rOther);
 
-        /// Copy constructor.
-        KratosShapeOptimizationApplication(KratosShapeOptimizationApplication const& rOther);
-
-
-        ///@}
-
-    }; // Class KratosShapeOptimizationApplication
-
-    ///@}
+		/// Copy constructor.
+		KratosShapeOptimizationApplication(KratosShapeOptimizationApplication const& rOther);
 
 
-    ///@name Type Definitions
-    ///@{
+		///@}
+
+	}; // Class KratosShapeOptimizationApplication
+
+	///@}
 
 
-    ///@}
-    ///@name Input and output
-    ///@{
+	///@name Type Definitions
+	///@{
 
-    ///@}
+
+	///@}
+	///@name Input and output
+	///@{
+
+	///@}
 
 
 }  // namespace Kratos.

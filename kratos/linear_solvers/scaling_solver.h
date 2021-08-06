@@ -21,7 +21,7 @@
 
 // Project includes
 #include "includes/define.h"
-#include "includes/linear_solver_factory.h"
+#include "factories/linear_solver_factory.h"
 #include "linear_solvers/linear_solver.h"
 #include "utilities/openmp_utils.h"
 
@@ -56,7 +56,6 @@ namespace Kratos
  * @tparam TSparseSpaceType The sparse space definition
  * @tparam TDenseSpaceType The dense space definition
  * @tparam TReordererType The reorder considered
- * @warning SymmetricScaling is not taken as argument. Check that
  */
 template<class TSparseSpaceType, class TDenseSpaceType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
@@ -70,13 +69,23 @@ public:
     /// Pointer definition of ScalingSolver
     KRATOS_CLASS_POINTER_DEFINITION(ScalingSolver);
 
+    /// Definition of the base type
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
 
+    /// The definition of the spaces (sparse matrix)
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
+    /// The definition of the spaces (vector)
     typedef typename TSparseSpaceType::VectorType VectorType;
 
+    /// The definition of the spaces (dense matrix)
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+
+    /// The definition of the linear solver factory type
+    typedef LinearSolverFactory<TSparseSpaceType,TDenseSpaceType> LinearSolverFactoryType;
+
+    /// The index type definition to be consistent
+    typedef typename TSparseSpaceType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
@@ -87,23 +96,35 @@ public:
     {
     }
 
-    ScalingSolver(typename LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>::Pointer pLinearSolver,
-                  bool SymmetricScaling )
+    /**
+     * @brief Constructor without parameters
+     * @param pLinearSolver The linear solver to be scaled
+     * @param SymmetricScaling If the scaling is symmetric (true by default)
+     */
+    ScalingSolver(
+        typename BaseType::Pointer pLinearSolver,
+        const bool SymmetricScaling = true
+        ) : BaseType (),
+            mpLinearSolver(pLinearSolver),
+            mSymmetricScaling(SymmetricScaling)
     {
-        mSymmetricScaling = true;
-        mpLinearSolver = pLinearSolver;
     }
 
-    ScalingSolver(Parameters settings
-                   ): BaseType ()
+    /**
+     * @brief Constructor with parameters
+     * @param ThisParameters The configuration parameters of the linear solver
+     */
+    ScalingSolver(Parameters ThisParameters)
+        : BaseType ()
     {
         KRATOS_TRY
 
-        KRATOS_ERROR_IF_NOT(settings.Has("solver_type")) << "Solver_type must be specified to construct the ScalingSolver" << std::endl;
+        KRATOS_ERROR_IF_NOT(ThisParameters.Has("solver_type")) << "Solver_type must be specified to construct the ScalingSolver" << std::endl;
 
-        mpLinearSolver = LinearSolverFactory<TSparseSpaceType,TDenseSpaceType>().Create(settings );
-        mSymmetricScaling = true;
-        
+        mpLinearSolver = LinearSolverFactoryType().Create(ThisParameters);
+
+        mSymmetricScaling = ThisParameters.Has("symmetric_scaling") ? ThisParameters["symmetric_scaling"].GetBool() : true;
+
         KRATOS_CATCH("")
     }
 
@@ -207,9 +228,9 @@ public:
         }
         else
         {
-            #pragma omp parallel for
-            for(int i=0; i< static_cast<int>(scaling_vector.size()); i++)
-                scaling_vector[i] = sqrt(std::abs(scaling_vector[i]));
+            IndexPartition<std::size_t>(scaling_vector.size()).for_each([&](std::size_t Index){
+                scaling_vector[Index] = sqrt(std::abs(scaling_vector[Index]));
+            });
 
             SymmetricScaling(rA,scaling_vector);
 
@@ -217,9 +238,9 @@ public:
         }
 
         //scale RHS
-        #pragma omp parallel for
-        for(int i=0; i< static_cast<int>(scaling_vector.size()); i++)
-            rB[i] /= scaling_vector[i];
+        IndexPartition<std::size_t>(scaling_vector.size()).for_each([&](std::size_t Index){
+            rB[Index] /= scaling_vector[Index];
+        });
 
 
         //solve the problem
@@ -228,9 +249,9 @@ public:
         //backscale the solution
         if(mSymmetricScaling == true)
         {
-            #pragma omp parallel for
-            for(int i=0; i< static_cast<int>(scaling_vector.size()); i++)
-                rX[i] /= scaling_vector[i];
+            IndexPartition<std::size_t>(scaling_vector.size()).for_each([&](std::size_t Index){
+                rX[Index] /= scaling_vector[Index];
+            });
         }
 
         return is_solved;
@@ -241,6 +262,11 @@ public:
     ///@}
     ///@name Access
     ///@{
+
+    IndexType GetIterationsNumber() override
+    {
+        return mpLinearSolver->GetIterationsNumber();
+    }
 
 
     ///@}
@@ -338,7 +364,7 @@ private:
 
         //create partition
         OpenMPUtils::PartitionVector partition;
-        int number_of_threads = OpenMPUtils::GetNumThreads();
+        int number_of_threads = ParallelUtilities::GetNumThreads();
         OpenMPUtils::DivideInPartitions(A.size1(),number_of_threads,  partition);
         //parallel loop
 
@@ -346,9 +372,9 @@ private:
         {
             int thread_id = OpenMPUtils::ThisThread();
             int number_of_rows = partition[thread_id+1] - partition[thread_id];
-            typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator row_iter_begin = A.index1_data().begin()+partition[thread_id];
-            typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator index_2_begin = A.index2_data().begin()+*row_iter_begin;
-            typename compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::iterator value_begin = A.value_data().begin()+*row_iter_begin;
+            typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator row_iter_begin = A.index1_data().begin()+partition[thread_id];
+            typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator index_2_begin = A.index2_data().begin()+*row_iter_begin;
+            typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::iterator value_begin = A.value_data().begin()+*row_iter_begin;
 
             perform_matrix_scaling(    number_of_rows,
                                        row_iter_begin,
@@ -365,9 +391,9 @@ private:
      */
     static void perform_matrix_scaling(
         int number_of_rows,
-        typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator row_begin,
-        typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator index2_begin,
-        typename compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::iterator value_begin,
+        typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator row_begin,
+        typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::iterator index2_begin,
+        typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::iterator value_begin,
         unsigned int output_begin_index,
         const VectorType& weights
     )
@@ -402,7 +428,7 @@ private:
 
         //create partition
         OpenMPUtils::PartitionVector partition;
-        int number_of_threads = OpenMPUtils::GetNumThreads();
+        int number_of_threads = ParallelUtilities::GetNumThreads();
         OpenMPUtils::DivideInPartitions(A.size1(),number_of_threads,  partition);
         //parallel loop
 
@@ -410,9 +436,9 @@ private:
         {
             int thread_id = OpenMPUtils::ThisThread();
             int number_of_rows = partition[thread_id+1] - partition[thread_id];
-            typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator row_iter_begin = A.index1_data().begin()+partition[thread_id];
-            typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator index_2_begin = A.index2_data().begin()+*row_iter_begin;
-            typename compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::const_iterator value_begin = A.value_data().begin()+*row_iter_begin;
+            typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator row_iter_begin = A.index1_data().begin()+partition[thread_id];
+            typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator index_2_begin = A.index2_data().begin()+*row_iter_begin;
+            typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::const_iterator value_begin = A.value_data().begin()+*row_iter_begin;
 
             GS2weights(    number_of_rows,
                            row_iter_begin,
@@ -429,9 +455,9 @@ private:
      */
     static void GS2weights(
         int number_of_rows,
-        typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator row_begin,
-        typename compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator index2_begin,
-        typename compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::const_iterator value_begin,
+        typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator row_begin,
+        typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::index_array_type::const_iterator index2_begin,
+        typename boost::numeric::ublas::compressed_matrix<typename TDenseSpaceType::DataType>::value_array_type::const_iterator value_begin,
         unsigned int output_begin_index,
         VectorType& weights
     )

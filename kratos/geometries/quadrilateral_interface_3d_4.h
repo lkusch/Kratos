@@ -355,23 +355,6 @@ public:
         return typename BaseType::Pointer( new QuadrilateralInterface3D4( ThisPoints ) );
     }
 
-    // Geometry< Point<3> >::Pointer Clone() const override
-    // {
-    //     Geometry< Point<3> >::PointsArrayType NewPoints;
-
-    //     //making a copy of the nodes TO POINTS (not Nodes!!!)
-    //     for ( IndexType i = 0 ; i < this->size() ; i++ )
-    //     {
-    //             NewPoints.push_back(Kratos::make_shared< Point<3> >(( *this )[i]));
-    //     }
-
-    //     //creating a geometry with the new points
-    //     Geometry< Point<3> >::Pointer p_clone( new QuadrilateralInterface3D4< Point<3> >( NewPoints ) );
-
-    //     return p_clone;
-    // }
-
-
     /**
      * returns the local coordinates of all nodes of the current geometry
      * @param rResult a Matrix object that will be overwritten by the result
@@ -388,15 +371,6 @@ public:
         rResult( 2, 1 ) =  1.0;
         rResult( 3, 0 ) = -1.0;
         rResult( 3, 1 ) =  1.0;
-        return rResult;
-    }
-
-    //lumping factors for the calculation of the lumped mass matrix
-    Vector& LumpingFactors( Vector& rResult ) const override
-    {
-	if(rResult.size() != 4)
-   	   rResult.resize( 4, false );
-        std::fill( rResult.begin(), rResult.end(), 1.00 / 4.00 );
         return rResult;
     }
 
@@ -490,7 +464,7 @@ public:
         const CoordinatesArrayType& rPoint,
         CoordinatesArrayType& rResult,
         const double Tolerance = std::numeric_limits<double>::epsilon()
-        ) override
+        ) const override
     {
         PointLocalCoordinates( rResult, rPoint );
 
@@ -870,33 +844,36 @@ public:
         return rResult;
     }
 
-    /** This method gives you number of all edges of this
-    geometry. This method will gives you number of all the edges
-    with one dimension less than this geometry. for example a
-    triangle would return three or a tetrahedral would return
-    four but won't return nine related to its six edge lines.
 
-    @return SizeType containes number of this geometry edges.
-    @see Edges()
-    @see Edge()
-    */
+    ///@}
+    ///@name Edge
+    ///@{
+
+    /**
+     * @brief This method gives you number of all edges of this geometry.
+     * @details For example, for a hexahedron, this would be 12
+     * @return SizeType containes number of this geometry edges.
+     * @see EdgesNumber()
+     * @see Edges()
+     * @see GenerateEdges()
+     * @see FacesNumber()
+     * @see Faces()
+     * @see GenerateFaces()
+     */
     SizeType EdgesNumber() const override
     {
         return 4;
     }
 
-    /** This method gives you all edges of this geometry. This
-    method will gives you all the edges with one dimension less
-    than this geometry. for example a triangle would return
-    three lines as its edges or a tetrahedral would return four
-    triangle as its edges but won't return its six edge
-    lines by this method.
-
-    @return GeometriesArrayType containes this geometry edges.
-    @see EdgesNumber()
-    @see Edge()
-    */
-    GeometriesArrayType Edges( void ) override
+    /**
+     * @brief This method gives you all edges of this geometry.
+     * @details This method will gives you all the edges with one dimension less than this geometry.
+     * For example a triangle would return three lines as its edges or a tetrahedral would return four triangle as its edges but won't return its six edge lines by this method.
+     * @return GeometriesArrayType containes this geometry edges.
+     * @see EdgesNumber()
+     * @see Edge()
+     */
+    GeometriesArrayType GenerateEdges() const override
     {
         GeometriesArrayType edges = GeometriesArrayType();
         typedef typename Geometry<TPointType>::Pointer EdgePointerType;
@@ -1208,8 +1185,10 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
+
     static const GeometryData msGeometryData;
 
+    static const GeometryDimension msGeometryDimension;
 
     ///@}
     ///@name Serialization
@@ -1441,12 +1420,17 @@ template<class TPointType> inline std::ostream& operator << (
 
 template<class TPointType> const
 GeometryData QuadrilateralInterface3D4<TPointType>::msGeometryData(
-    2, 3, 1,
+    &msGeometryDimension,
     GeometryData::GI_GAUSS_2,
     QuadrilateralInterface3D4<TPointType>::AllIntegrationPoints(),
     QuadrilateralInterface3D4<TPointType>::AllShapeFunctionsValues(),
     AllShapeFunctionsLocalGradients()
 );
+
+template<class TPointType>
+const GeometryDimension QuadrilateralInterface3D4<TPointType>::msGeometryDimension(
+    2, 3, 1);
+
 }// namespace Kratos.
 
 #endif // KRATOS_QUADRILATERAL_INTERFACE_3D_4_H_INCLUDED  defined

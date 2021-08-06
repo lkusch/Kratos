@@ -36,7 +36,7 @@ namespace Kratos
 
 
 
-class HenckyMCPlastic3DLaw
+class KRATOS_API(PARTICLE_MECHANICS_APPLICATION) HenckyMCPlastic3DLaw
     : public HenckyElasticPlastic3DLaw
 
 {
@@ -48,9 +48,9 @@ public:
     typedef ConstitutiveLaw         BaseType;
     typedef std::size_t             SizeType;
 
-    typedef MPMFlowRule::Pointer                FlowRulePointer;
-    typedef MPMYieldCriterion::Pointer    YieldCriterionPointer;
-    typedef MPMHardeningLaw::Pointer        HardeningLawPointer;
+    typedef ParticleFlowRule::Pointer                FlowRulePointer;
+    typedef ParticleYieldCriterion::Pointer    YieldCriterionPointer;
+    typedef ParticleHardeningLaw::Pointer        HardeningLawPointer;
     typedef Properties::Pointer            PropertiesPointer;
 
     /**

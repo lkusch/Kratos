@@ -100,7 +100,7 @@ public:
     typedef std::vector< Dof<double>::Pointer > DofsVectorType;
 
     /// Pointer definition of EmbeddedAusasNavierStokesWallCondition
-    KRATOS_CLASS_POINTER_DEFINITION(EmbeddedAusasNavierStokesWallCondition);
+    KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(EmbeddedAusasNavierStokesWallCondition);
 
     struct ConditionDataStruct
     {
@@ -199,7 +199,7 @@ public:
       @param pProperties Pointer to the element's properties
       */
     Condition::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override {
-        return Kratos::make_shared<EmbeddedAusasNavierStokesWallCondition>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+        return Kratos::make_intrusive<EmbeddedAusasNavierStokesWallCondition>(NewId, GetGeometry().Create(ThisNodes), pProperties);
     }
 
     /// Create a new EmbeddedAusasNavierStokesWallCondition object.
@@ -209,7 +209,7 @@ public:
       @param pProperties Pointer to the element's properties
       */
     Condition::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override {
-        return Kratos::make_shared< EmbeddedAusasNavierStokesWallCondition >(NewId, pGeom, pProperties);
+        return Kratos::make_intrusive< EmbeddedAusasNavierStokesWallCondition >(NewId, pGeom, pProperties);
     }
 
     /**
@@ -232,7 +232,7 @@ public:
      * Note that this needs to be done at each time step for that cases
      * in where the distance function varies.
      */
-    void InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo) override {
+    void InitializeSolutionStep(const ProcessInfo& rCurrentProcessInfo) override {
         KRATOS_TRY;
 
         // Set a reference to the current condition geometry
@@ -253,9 +253,9 @@ public:
         if (n_pos != 0 && n_neg != 0){
 
             // Get all the possible element candidates
-            WeakPointerVector<Element> element_candidates;
+            GlobalPointersVector<Element> element_candidates;
             for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node) {
-                WeakPointerVector<Element> &r_node_element_candidates = r_geometry[i_node].GetValue(NEIGHBOUR_ELEMENTS);
+                GlobalPointersVector<Element> &r_node_element_candidates = r_geometry[i_node].GetValue(NEIGHBOUR_ELEMENTS);
                 for (unsigned int j = 0; j < r_node_element_candidates.size(); j++) {
                     element_candidates.push_back(r_node_element_candidates(j));
                 }
@@ -325,7 +325,7 @@ public:
      */
     void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
                               VectorType& rRightHandSideVector,
-                              ProcessInfo& rCurrentProcessInfo) override
+                              const ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
 
@@ -421,7 +421,7 @@ public:
      * @param rCurrentProcessInfo reference to the ProcessInfo (unused)
      */
     void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
-                               ProcessInfo& rCurrentProcessInfo) override
+                               const ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
 
@@ -501,7 +501,7 @@ public:
      * @param rCurrentProcessInfo reference to the ProcessInfo (unused)
      */
     void CalculateRightHandSide(VectorType& rRightHandSideVector,
-                                        ProcessInfo& rCurrentProcessInfo) override
+                                        const ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
 
@@ -584,7 +584,7 @@ public:
     /**
      * @param rCurrentProcessInfo reference to the ProcessInfo
      */
-    int Check(const ProcessInfo& rCurrentProcessInfo) override
+    int Check(const ProcessInfo& rCurrentProcessInfo) const override
     {
         KRATOS_TRY;
 
@@ -595,24 +595,6 @@ public:
         if (Check != 0) {
             return Check;
         } else {
-            // Check that all required variables have been registered
-            if(VELOCITY.Key() == 0)
-                KRATOS_ERROR << "VELOCITY Key is 0. Check if the application was correctly registered.";
-            if(MESH_VELOCITY.Key() == 0)
-                KRATOS_ERROR << "MESH_VELOCITY Key is 0. Check if the application was correctly registered.";
-            if(ACCELERATION.Key() == 0)
-                KRATOS_ERROR << "ACCELERATION Key is 0. Check if the application was correctly registered.";
-            if(PRESSURE.Key() == 0)
-                KRATOS_ERROR << "PRESSURE Key is 0. Check if the application was correctly registered.";
-            if(DENSITY.Key() == 0)
-                KRATOS_ERROR << "DENSITY Key is 0. Check if the application was correctly registered.";
-            if(DYNAMIC_VISCOSITY.Key() == 0)
-                KRATOS_ERROR << "DYNAMIC_VISCOSITY Key is 0. Check if the application was correctly registered.";
-            if(EXTERNAL_PRESSURE.Key() == 0)
-                KRATOS_ERROR << "EXTERNAL_PRESSURE Key is 0. Check if the application was correctly registered.";
-            if(DISTANCE.Key() == 0)
-                KRATOS_ERROR << "DISTANCE Key is 0. Check if the application was correctly registered.";
-
             // Checks on nodes
             // Check that the element's nodes contain all required SolutionStepData and Degrees of freedom
             for(unsigned int i = 0; i < rGeom.size(); ++i) {
@@ -645,14 +627,14 @@ public:
      * @param rResult A vector containing the global Id of each row
      * @param rCurrentProcessInfo the current process info object (unused)
      */
-    void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo) override;
+    void EquationIdVector(EquationIdVectorType& rResult, const ProcessInfo& rCurrentProcessInfo) const override;
 
     /// Returns a list of the element's Dofs
     /**
      * @param ElementalDofList the list of DOFs
      * @param rCurrentProcessInfo the current process info instance
      */
-    void GetDofList(DofsVectorType& ConditionDofList, ProcessInfo& CurrentProcessInfo) override;
+    void GetDofList(DofsVectorType& ConditionDofList, const ProcessInfo& CurrentProcessInfo) const override;
 
     ///@}
     ///@name Access
@@ -706,7 +688,7 @@ protected:
     ///@{
 
     Element::Pointer pGetElement() {
-		return mpParentElement.lock();
+		return mpParentElement->shared_from_this();
 	}
 
     std::vector<unsigned int > GetParentElementIds() {
@@ -841,9 +823,10 @@ protected:
 
             // Compute each Gauss pt. area normal
             (rData.area_normals_container).clear();
+            // We compute the area normal in each Gauss point
             for (unsigned int i_gauss = 0; i_gauss < n_gauss; ++i_gauss) {
                 const CoordinatesArrayType& gauss_pt_loc_coords = integration_points[i_gauss].Coordinates();
-                (rData.area_normals_container).push_back(r_geometry.AreaNormal(gauss_pt_loc_coords));
+                (rData.area_normals_container).push_back(r_geometry.Normal(gauss_pt_loc_coords));
             }
         }
 

@@ -69,7 +69,7 @@ template<class TDataType,
          class TGetKeyType = SetIdentityFunction<TDataType>,
          class TCompareType = std::less<typename TGetKeyType::result_type>,
          class TEqualType = std::equal_to<typename TGetKeyType::result_type>,
-         class TPointerType = Kratos::shared_ptr<TDataType>,
+         class TPointerType = typename TDataType::Pointer,
          class TContainerType = std::vector<TPointerType> >
 class PointerVectorSet
 {
@@ -229,6 +229,17 @@ public:
     {
         return const_iterator( mData.begin() );
     }
+
+    const_iterator cbegin()
+    {
+        return const_iterator(mData.begin());
+    }
+
+    const_iterator cbegin() const
+    {
+        return const_iterator(mData.begin());
+    }
+
     iterator                   end()
     {
         return iterator( mData.end() );
@@ -237,6 +248,17 @@ public:
     {
         return const_iterator( mData.end() );
     }
+
+    const_iterator cend()
+    {
+        return const_iterator(mData.end());
+    }
+
+    const_iterator cend() const
+    {
+        return const_iterator(mData.end());
+    }
+
     reverse_iterator           rbegin()
     {
         return reverse_iterator( mData.rbegin() );
@@ -324,6 +346,8 @@ public:
 
     void swap(PointerVectorSet& rOther)
     {
+        std::swap(mSortedPartSize,rOther.mSortedPartSize);
+        std::swap(mMaxBufferSize,rOther.mMaxBufferSize);
         mData.swap(rOther.mData);
     }
 
@@ -658,7 +682,7 @@ private:
         key_type mKey;
     public:
         EqualKeyTo() : mKey() {}
-        EqualKeyTo(key_type Key) : mKey(Key) {}
+        explicit EqualKeyTo(key_type Key) : mKey(Key) {}
         typename TEqualType::result_type operator()(TPointerType a) const
         {
             return TEqualType()(mKey, TGetKeyType()(*a));

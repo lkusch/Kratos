@@ -18,7 +18,7 @@
 
 #include "fluid_dynamics_application_variables.h"
 #include "custom_utilities/fluid_element_data.h"
-#include "custom_utilities/element_size_calculator.h"
+#include "utilities/element_size_calculator.h"
 #include "custom_utilities/fluid_element_utilities.h"
 
 namespace Kratos {
@@ -65,6 +65,9 @@ double DynamicViscosity;
 double DeltaTime;		   // Time increment
 double DynamicTau;         // Dynamic tau considered in ASGS stabilization coefficients
 double SmagorinskyConstant;
+double LinearDarcyCoefficient;
+double NonLinearDarcyCoefficient;
+double DarcyTerm;
 
 double bdf0;
 double bdf1;
@@ -110,16 +113,18 @@ void Initialize(const Element& rElement, const ProcessInfo& rProcessInfo) overri
 
     const Geometry< Node<3> >& r_geometry = rElement.GetGeometry();
     const Properties& r_properties = rElement.GetProperties();
-    this->FillFromNodalData(Velocity,VELOCITY,r_geometry);
+    this->FillFromHistoricalNodalData(Velocity,VELOCITY,r_geometry);
     this->FillFromHistoricalNodalData(Velocity_OldStep1,VELOCITY,r_geometry,1);
     this->FillFromHistoricalNodalData(Velocity_OldStep2,VELOCITY,r_geometry,2);
-	this->FillFromNodalData(Distance, DISTANCE, r_geometry);
-    this->FillFromNodalData(MeshVelocity,MESH_VELOCITY,r_geometry);
-    this->FillFromNodalData(BodyForce,BODY_FORCE,r_geometry);
-    this->FillFromNodalData(Pressure,PRESSURE,r_geometry);
-    this->FillFromNodalData(NodalDensity, DENSITY, r_geometry);
-    this->FillFromNodalData(NodalDynamicViscosity, DYNAMIC_VISCOSITY, r_geometry);
+	this->FillFromHistoricalNodalData(Distance, DISTANCE, r_geometry);
+    this->FillFromHistoricalNodalData(MeshVelocity,MESH_VELOCITY,r_geometry);
+    this->FillFromHistoricalNodalData(BodyForce,BODY_FORCE,r_geometry);
+    this->FillFromHistoricalNodalData(Pressure,PRESSURE,r_geometry);
+    this->FillFromHistoricalNodalData(NodalDensity, DENSITY, r_geometry);
+    this->FillFromHistoricalNodalData(NodalDynamicViscosity, DYNAMIC_VISCOSITY, r_geometry);
     this->FillFromProperties(SmagorinskyConstant, C_SMAGORINSKY, r_properties);
+    this->FillFromProperties(LinearDarcyCoefficient, LIN_DARCY_COEF, r_properties);
+    this->FillFromProperties(NonLinearDarcyCoefficient, NONLIN_DARCY_COEF, r_properties);
     this->FillFromProcessInfo(DeltaTime,DELTA_TIME,rProcessInfo);
     this->FillFromProcessInfo(DynamicTau,DYNAMIC_TAU,rProcessInfo);
 
@@ -154,6 +159,7 @@ void UpdateGeometryValues(
 {
     FluidElementData<TDim,TNumNodes, true>::UpdateGeometryValues(IntegrationPointIndex, NewWeight,rN,rDN_DX);
     ElementSize = ElementSizeCalculator<TDim,TNumNodes>::GradientsElementSize(rDN_DX);
+    CalculateDensityAtGaussPoint();
 }
 
 void UpdateGeometryValues(
@@ -164,21 +170,16 @@ void UpdateGeometryValues(
 	const MatrixRowType& rNenr,
 	const BoundedMatrix<double, TNumNodes, TDim>& rDN_DXenr)
 {
-	FluidElementData<TDim, TNumNodes, true>::UpdateGeometryValues(IntegrationPointIndex, NewWeight, rN, rDN_DX);
-	ElementSize = ElementSizeCalculator<TDim, TNumNodes>::GradientsElementSize(rDN_DX);
-	noalias(this->Nenr) = rNenr;
-	noalias(this->DN_DXenr) = rDN_DXenr;
+    FluidElementData<TDim, TNumNodes, true>::UpdateGeometryValues(IntegrationPointIndex, NewWeight, rN, rDN_DX);
+    ElementSize = ElementSizeCalculator<TDim, TNumNodes>::GradientsElementSize(rDN_DX);
+    noalias(this->Nenr) = rNenr;
+    noalias(this->DN_DXenr) = rDN_DXenr;
+    CalculateDensityAtGaussPoint();
 }
 
 static int Check(const Element& rElement, const ProcessInfo& rProcessInfo)
 {
     const Geometry< Node<3> >& r_geometry = rElement.GetGeometry();
-
-    KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
-	KRATOS_CHECK_VARIABLE_KEY(DISTANCE);
-    KRATOS_CHECK_VARIABLE_KEY(MESH_VELOCITY);
-    KRATOS_CHECK_VARIABLE_KEY(BODY_FORCE);
-    KRATOS_CHECK_VARIABLE_KEY(PRESSURE);
 
     for (unsigned int i = 0; i < TNumNodes; i++)
     {
@@ -188,12 +189,6 @@ static int Check(const Element& rElement, const ProcessInfo& rProcessInfo)
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(BODY_FORCE,r_geometry[i]);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(PRESSURE,r_geometry[i]);
     }
-
-    KRATOS_CHECK_VARIABLE_KEY(DENSITY);
-    KRATOS_CHECK_VARIABLE_KEY(DYNAMIC_VISCOSITY);
-    KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME);
-    KRATOS_CHECK_VARIABLE_KEY(DYNAMIC_TAU);
-    KRATOS_CHECK_VARIABLE_KEY(BDF_COEFFICIENTS);
 
     return 0;
 }
@@ -233,10 +228,10 @@ void CalculateAirMaterialResponse() {
 	if (TDim == 2)
 	{
         const double trace = strain[0] + strain[1];
-        const double volumetric_part = trace/3.0; // Note: this should be small for an incompressible fluid (it is basically the incompressibility error)
+        const double volumetric_part = trace/2.0; // Note: this should be small for an incompressible fluid (it is basically the incompressibility error)
 
-		stress[0] = c1 * strain[0] - volumetric_part;
-		stress[1] = c1 * strain[1] - volumetric_part;
+		stress[0] = c1 * (strain[0] - volumetric_part);
+		stress[1] = c1 * (strain[1] - volumetric_part);
 		stress[2] = c2 * strain[2];
 	}
 
@@ -344,6 +339,18 @@ void CalculateEffectiveViscosityAtGaussPoint()
         this->EffectiveViscosity = DynamicViscosity + 2.0*length_scale*strain_rate_norm;
     }
     else this->EffectiveViscosity = DynamicViscosity;
+}
+
+void ComputeDarcyTerm()
+{
+    array_1d<double, 3> convective_velocity(3, 0.0);
+    for (size_t i = 0; i < TNumNodes; i++) {
+        for (size_t j = 0; j < TDim; j++) {
+            convective_velocity[j] += this->N[i] * (Velocity(i, j) - MeshVelocity(i, j));
+        }
+    }
+    const double convective_velocity_norm = MathUtils<double>::Norm(convective_velocity);
+    DarcyTerm = this->EffectiveViscosity * LinearDarcyCoefficient + Density * NonLinearDarcyCoefficient * convective_velocity_norm;
 }
 ///@}
 

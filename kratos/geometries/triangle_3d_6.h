@@ -51,14 +51,14 @@ namespace Kratos
  * @ingroup KratosCore
  * @brief A six node 3D triangular geometry with quadratic shape functions
  * @details While the shape functions are only defined in 2D it is possible to define an arbitrary orientation in space. Thus it can be used for defining surfaces on 3D elements.
- * The node ordering corresponds with:       
- *          2                    
- *          |`\              
- *          |  `\           
- *          5    `4           
- *          |      `\          
- *          |        `\          
- *          0-----3----1           
+ * The node ordering corresponds with:
+ *          2
+ *          |`\
+ *          |  `\
+ *          5    `4
+ *          |      `\
+ *          |        `\
+ *          0-----3----1
  * @author Riccardo Rossi
  * @author Janosch Stascheit
  * @author Felix Nagel
@@ -235,10 +235,29 @@ public:
         this->Points().push_back( pSixthPoint );
     }
 
-    Triangle3D6( const PointsArrayType& ThisPoints )
-        : BaseType( ThisPoints, &msGeometryData )
+    explicit Triangle3D6(
+        const PointsArrayType& ThisPoints
+    ) : BaseType( ThisPoints, &msGeometryData )
     {
-    	KRATOS_ERROR_IF( this->PointsNumber() != 6 ) << "Invalid points number. Expected 6, given " << this->PointsNumber() << std::endl;
+        KRATOS_ERROR_IF( this->PointsNumber() != 6 ) << "Invalid points number. Expected 6, given " << this->PointsNumber() << std::endl;
+    }
+
+    /// Constructor with Geometry Id
+    explicit Triangle3D6(
+        const IndexType GeometryId,
+        const PointsArrayType& rThisPoints
+    ) : BaseType(GeometryId, rThisPoints, &msGeometryData)
+    {
+        KRATOS_ERROR_IF( this->PointsNumber() != 6 ) << "Invalid points number. Expected 6, given " << this->PointsNumber() << std::endl;
+    }
+
+    /// Constructor with Geometry Name
+    explicit Triangle3D6(
+        const std::string& rGeometryName,
+        const PointsArrayType& rThisPoints
+    ) : BaseType(rGeometryName, rThisPoints, &msGeometryData)
+    {
+        KRATOS_ERROR_IF(this->PointsNumber() != 20) << "Invalid points number. Expected 20, given " << this->PointsNumber() << std::endl;
     }
 
     /**
@@ -330,28 +349,61 @@ public:
     ///@name Operations
     ///@{
 
-    typename BaseType::Pointer Create( PointsArrayType const& ThisPoints ) const override
+    /**
+     * @brief Creates a new geometry pointer
+     * @param rThisPoints the nodes of the new geometry
+     * @return Pointer to the new geometry
+     */
+    typename BaseType::Pointer Create(
+        PointsArrayType const& rThisPoints
+        ) const override
     {
-        return typename BaseType::Pointer( new Triangle3D6( ThisPoints ) );
+        return typename BaseType::Pointer( new Triangle3D6( rThisPoints ) );
     }
 
-    
-    // Geometry< Point<3> >::Pointer Clone() const override
-    // {
-    //     Geometry< Point<3> >::PointsArrayType NewPoints;
+    /**
+     * @brief Creates a new geometry pointer
+     * @param NewGeometryId the ID of the new geometry
+     * @param rThisPoints the nodes of the new geometry
+     * @return Pointer to the new geometry
+     */
+    typename BaseType::Pointer Create(
+        const IndexType NewGeometryId,
+        PointsArrayType const& rThisPoints
+        ) const override
+    {
+        return typename BaseType::Pointer( new Triangle3D6( NewGeometryId, rThisPoints ) );
+    }
 
-    //     //making a copy of the nodes TO POINTS (not Nodes!!!)
-    //     for ( IndexType i = 0 ; i < this->size() ; i++ )
-    //     {
-    //         Point<3>::Pointer pnew_point = Kratos::make_shared< Point<3> >(( *this )[i]);
-    //         NewPoints.push_back(pnew_point);
-    //     }
+    /**
+     * @brief Creates a new geometry pointer
+     * @param rGeometry reference to an existing geometry
+     * @return Pointer to the new geometry
+     */
+    typename BaseType::Pointer Create(
+        const BaseType& rGeometry
+        ) const override
+    {
+        auto p_geometry = typename BaseType::Pointer( new Triangle3D6( rGeometry.Points() ) );
+        p_geometry->SetData(rGeometry.GetData());
+        return p_geometry;
+    }
 
-    //     //creating a geometry with the new points
-    //     Geometry< Point<3> >::Pointer p_clone( new Triangle3D6< Point<3> >( NewPoints ) );
-
-    //     return p_clone;
-    // }
+    /**
+     * @brief Creates a new geometry pointer
+     * @param NewGeometryId the ID of the new geometry
+     * @param rGeometry reference to an existing geometry
+     * @return Pointer to the new geometry
+     */
+    typename BaseType::Pointer Create(
+        const IndexType NewGeometryId,
+        const BaseType& rGeometry
+        ) const override
+    {
+        auto p_geometry = typename BaseType::Pointer( new Triangle3D6( NewGeometryId, rGeometry.Points() ) );
+        p_geometry->SetData(rGeometry.GetData());
+        return p_geometry;
+    }
 
     /**
      * returns the local coordinates of all nodes of the current geometry
@@ -374,15 +426,6 @@ public:
         rResult( 4, 1 ) =  0.5;
         rResult( 5, 0 ) =  0.0;
         rResult( 5, 1 ) =  0.5;
-        return rResult;
-    }
-
-    //lumping factors for the calculation of the lumped mass matrix
-    Vector& LumpingFactors( Vector& rResult ) const override
-    {
-        if(rResult.size() != 6)
-            rResult.resize( 6, false );
-        std::fill( rResult.begin(), rResult.end(), 1.00 / 6.00 );
         return rResult;
     }
 
@@ -412,13 +455,13 @@ public:
     double Length() const override
     {
         // return sqrt( fabs( DeterminantOfJacobian( PointType() ) ) );
-        // Approximation to avoid errors. Can be improved. 
+        // Approximation to avoid errors. Can be improved.
 
 		array_1d<double, 3> p0 = BaseType::GetPoint( 0 );
 		array_1d<double, 3> p1 = BaseType::GetPoint( 1 );
 
 		array_1d<double, 3> vx( p1 - p0 );
-        
+
 		return MathUtils<double>::Norm3(vx);
     }
 
@@ -441,18 +484,18 @@ public:
     {
         //return fabs( DeterminantOfJacobian( PointType() ) ) * 0.5;
         // Approximation to avoid errors. Can be improved.
-        
+
         array_1d<double, 3> p0 = BaseType::GetPoint( 0 );
 		array_1d<double, 3> p1 = BaseType::GetPoint( 1 );
 		array_1d<double, 3> p2 = BaseType::GetPoint( 2 );
 		array_1d<double, 3> p3 = BaseType::GetPoint( 3 );
-		
+
 		array_1d<double, 3> vx( p1 - p0 );
 		array_1d<double, 3> vy( p2 - p3 );
-        
+
 		double base = MathUtils<double>::Norm3(vx);
         double length = MathUtils<double>::Norm3(vy);
-        
+
         return base*length*0.5;
     }
 
@@ -474,7 +517,7 @@ public:
     {
         return Area();
     }
-    
+
     /**
      * @brief Returns whether given arbitrary point is inside the Geometry and the respective
      * local point for the given global point
@@ -484,10 +527,10 @@ public:
      * @return True if the point is inside, false otherwise
      */
     bool IsInside(
-        const CoordinatesArrayType& rPoint, 
-        CoordinatesArrayType& rResult, 
-        const double Tolerance = std::numeric_limits<double>::epsilon() 
-        ) override
+        const CoordinatesArrayType& rPoint,
+        CoordinatesArrayType& rResult,
+        const double Tolerance = std::numeric_limits<double>::epsilon()
+        )const  override
     {
         this->PointLocalCoordinates( rResult, rPoint );
 
@@ -944,33 +987,35 @@ public:
         rOStream << "    Jacobian in the origin\t : " << jacobian;
     }
 
-    /** This method gives you number of all edges of this
-    geometry. This method will gives you number of all the edges
-    with one dimension less than this geometry. for example a
-    triangle would return three or a tetrahedral would return
-    four but won't return nine related to its six edge lines.
+    ///@}
+    ///@name Edge
+    ///@{
 
-    @return SizeType containes number of this geometry edges.
-    @see Edges()
-    @see Edge()
+    /**
+     * @brief This method gives you number of all edges of this geometry.
+     * @details For example, for a hexahedron, this would be 12
+     * @return SizeType containes number of this geometry edges.
+     * @see EdgesNumber()
+     * @see Edges()
+     * @see GenerateEdges()
+     * @see FacesNumber()
+     * @see Faces()
+     * @see GenerateFaces()
      */
     SizeType EdgesNumber() const override
     {
         return 3;
     }
 
-    /** This method gives you all edges of this geometry. This
-    method will gives you all the edges with one dimension less
-    than this geometry. for example a triangle would return
-    three lines as its edges or a tetrahedral would return four
-    triangle as its edges but won't return its six edge
-    lines by this method.
-
-    @return GeometriesArrayType containes this geometry edges.
-    @see EdgesNumber()
-    @see Edge()
+    /**
+     * @brief This method gives you all edges of this geometry.
+     * @details This method will gives you all the edges with one dimension less than this geometry.
+     * For example a triangle would return three lines as its edges or a tetrahedral would return four triangle as its edges but won't return its six edge lines by this method.
+     * @return GeometriesArrayType containes this geometry edges.
+     * @see EdgesNumber()
+     * @see Edge()
      */
-    GeometriesArrayType Edges( void ) override
+    GeometriesArrayType GenerateEdges() const override
     {
         GeometriesArrayType edges = GeometriesArrayType();
 
@@ -1202,8 +1247,10 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
+
     static const GeometryData msGeometryData;
 
+    static const GeometryDimension msGeometryDimension;
 
     ///@}
     ///@name Serialization
@@ -1438,13 +1485,18 @@ template<class TPointType> inline std::ostream& operator << (
 
 template<class TPointType> const
 GeometryData Triangle3D6<TPointType>::msGeometryData(
-    2, 3, 2,
+    &msGeometryDimension,
     GeometryData::GI_GAUSS_2,
     Triangle3D6<TPointType>::AllIntegrationPoints(),
     Triangle3D6<TPointType>::AllShapeFunctionsValues(),
     AllShapeFunctionsLocalGradients()
 );
+
+template<class TPointType> const
+GeometryDimension Triangle3D6<TPointType>::msGeometryDimension(
+    2, 3, 2);
+
 }// namespace Kratos.
 
-#endif // KRATOS_TRIANGLE_3D_6_H_INCLUDED defined 
+#endif // KRATOS_TRIANGLE_3D_6_H_INCLUDED defined
 

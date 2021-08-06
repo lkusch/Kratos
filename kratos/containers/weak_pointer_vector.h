@@ -63,7 +63,7 @@ namespace Kratos
     deleting.
  */
 template<class TDataType,
-         class TPointerType = Kratos::weak_ptr<TDataType>,
+         class TPointerType = typename TDataType::WeakPointer,
          class TContainerType = std::vector<TPointerType> >
 class WeakPointerVector
 {
@@ -109,7 +109,7 @@ public:
 
     WeakPointerVector(const WeakPointerVector& rOther) :  mData(rOther.mData) {}
 
-    WeakPointerVector(const TContainerType& rContainer) :  mData(rContainer)
+    explicit WeakPointerVector(const TContainerType& rContainer) :  mData(rContainer)
     {
     }
 

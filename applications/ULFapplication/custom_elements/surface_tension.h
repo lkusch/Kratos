@@ -94,7 +94,7 @@ public:
     ///@{
 
     /// Pointer definition of SurfaceTension
-    KRATOS_CLASS_POINTER_DEFINITION(SurfaceTension);
+    KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SurfaceTension);
 
     ///base type: an IndexedObject that automatically has a unique number
     typedef IndexedObject BaseType;
@@ -127,8 +127,6 @@ public:
     typedef std::vector< Dof<double>::Pointer > DofsVectorType;
 
     typedef PointerVectorSet<Dof<double>, IndexedObject> DofsArrayType;
-
-    typedef VectorMap<IndexType, DataValueContainer> SolutionStepsElementalDataContainerType;
 
      typedef array_1d<double, TNumNodes> ShapeFunctionsType;
      typedef BoundedMatrix<double, TNumNodes, TDim> ShapeFunctionDerivativesType;
@@ -904,22 +902,6 @@ public:
         int ErrorCode = Kratos::Element::Check(rCurrentProcessInfo);
         if(ErrorCode != 0) return ErrorCode;
 
-        // Check that all required variables have been registered
-        KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
-        KRATOS_CHECK_VARIABLE_KEY(MESH_VELOCITY);
-        KRATOS_CHECK_VARIABLE_KEY(ACCELERATION);
-        KRATOS_CHECK_VARIABLE_KEY(PRESSURE);
-        KRATOS_CHECK_VARIABLE_KEY(DENSITY);
-        KRATOS_CHECK_VARIABLE_KEY(VISCOSITY);
-        KRATOS_CHECK_VARIABLE_KEY(BODY_FORCE);
-        KRATOS_CHECK_VARIABLE_KEY(OSS_SWITCH);
-        KRATOS_CHECK_VARIABLE_KEY(DYNAMIC_TAU);
-        KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME);
-        KRATOS_CHECK_VARIABLE_KEY(ADVPROJ);
-        KRATOS_CHECK_VARIABLE_KEY(DIVPROJ);
-        KRATOS_CHECK_VARIABLE_KEY(NODAL_AREA);
-        KRATOS_CHECK_VARIABLE_KEY(C_SMAGORINSKY);
-        KRATOS_CHECK_VARIABLE_KEY(ERROR_RATIO);
         // Additional variables, only required to print results:
         // SUBSCALE_VELOCITY, SUBSCALE_PRESSURE, TAUONE, TAUTWO, MU, VORTICITY.
 
@@ -2402,7 +2384,7 @@ protected:
 	    fsign4 = fsign4/abs(fsign4);
 
 	    int num_neighs_l = 0;
-	    WeakPointerVector< Node<3> >& neighb_l = this->GetGeometry()[ll].GetValue(NEIGHBOUR_NODES);
+	    GlobalPointersVector< Node<3> >& neighb_l = this->GetGeometry()[ll].GetValue(NEIGHBOUR_NODES);
 	    for (unsigned int i = 0; i < neighb_l.size(); i++)
 	    {
 	      if (neighb_l[i].FastGetSolutionStepValue(IS_BOUNDARY) != 0.0)

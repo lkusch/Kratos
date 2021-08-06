@@ -4,8 +4,8 @@
 //   _|\_\_|  \__,_|\__|\___/ ____/
 //                   Multi-Physics
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+//  License:         BSD License
+//                   Kratos default license: kratos/license.txt
 //
 //  Main authors:    Philipp Bucher, Jordi Cotela
 //
@@ -27,38 +27,20 @@
 
 #include "custom_mappers/mapper.h"
 
-
 namespace Kratos
 {
-///@addtogroup ApplicationNameApplication
+///@addtogroup MappingApplication
 ///@{
 
-///@name Kratos Globals
-///@{
-
-///@}
-///@name Type Definitions
-///@{
-
-///@}
-///@name  Enum's
-///@{
-
-///@}
-///@name  Functions
-///@{
-
-///@}
 ///@name Kratos Classes
 ///@{
 
 /// Python Interface of the MappingApplication
 /** This class constructs the mappers and exposes them to Python
 * Some checks are performed to see if the Input (ModelParts and JSON-Parameters) are valid
-* For information abt the available echo_levels and the JSON default-parameters
-* look into the class description of the MapperCommunicator
 */
-class MapperFactory
+template<class TSparseSpace, class TDenseSpace>
+class KRATOS_API(MAPPING_APPLICATION) MapperFactory
 {
 public:
     ///@name Type Definitions
@@ -72,36 +54,76 @@ public:
     ///@{
 
     /// Destructor.
-    virtual ~MapperFactory() { }
-
-
-    ///@}
-    ///@name Operators
-    ///@{
-
+    virtual ~MapperFactory() = default;
 
     ///@}
     ///@name Operations
     ///@{
-    
 
-    static Mapper::Pointer CreateMapper(ModelPart& rModelPartOrigin,
-                                        ModelPart& rModelPartDestination,
-                                        Parameters JsonParameters);
+    static typename Mapper<TSparseSpace, TDenseSpace>::Pointer CreateMapper(
+        ModelPart& rModelPartOrigin,
+        ModelPart& rModelPartDestination,
+        Parameters MapperSettings)
+    {
+        ModelPart& r_interface_model_part_origin = ReadInterfaceModelPart(rModelPartOrigin, MapperSettings, "origin");
+        ModelPart& r_interface_model_part_destination = ReadInterfaceModelPart(rModelPartDestination, MapperSettings, "destination");
 
-    static void Register(const std::string& MapperName,
-                         Mapper::Pointer pMapperPrototype);
+        KRATOS_ERROR_IF(!TSparseSpace::IsDistributed() && (r_interface_model_part_origin.IsDistributed() || r_interface_model_part_destination.IsDistributed())) << "Trying to construct a non-MPI Mapper with a distributed ModelPart. Please use \"CreateMPIMapper\" instead!" << std::endl;
 
+        KRATOS_ERROR_IF(TSparseSpace::IsDistributed() && !r_interface_model_part_origin.IsDistributed() && !r_interface_model_part_destination.IsDistributed()) << "Trying to construct a MPI Mapper without a distributed ModelPart. Please use \"CreateMapper\" instead!" << std::endl;
 
-    ///@}
-    ///@name Access
-    ///@{
+        const std::string mapper_name = MapperSettings["mapper_type"].GetString();
 
+        const auto& mapper_list = GetRegisteredMappersList();
 
-    ///@}
-    ///@name Inquiry
-    ///@{
+        if (mapper_list.find(mapper_name) != mapper_list.end()) {
+            // Removing Parameters that are not needed by the Mapper
+            MapperSettings.RemoveValue("mapper_type");
+            MapperSettings.RemoveValue("interface_submodel_part_origin");
+            MapperSettings.RemoveValue("interface_submodel_part_destination");
 
+            // TODO check why this works, Clone currently returns a unique ptr!!!
+            return mapper_list.at(mapper_name)->Clone(r_interface_model_part_origin,
+                                                      r_interface_model_part_destination,
+                                                      MapperSettings);
+        }
+        else {
+            std::stringstream err_msg;
+            err_msg << "The requested Mapper \"" << mapper_name <<"\" is not not available!\n"
+                    << "The following Mappers are available:" << std::endl;
+
+            for (auto const& registered_mapper : mapper_list)
+                err_msg << "\t" << registered_mapper.first << "\n";
+
+            KRATOS_ERROR << err_msg.str() << std::endl;
+        }
+    }
+
+    static void Register(const std::string& rMapperName,
+                  typename Mapper<TSparseSpace, TDenseSpace>::Pointer pMapperPrototype)
+    {
+        GetRegisteredMappersList().insert(
+            std::make_pair(rMapperName, pMapperPrototype));
+    }
+
+    static bool HasMapper(const std::string& rMapperName)
+    {
+        const auto& mapper_list = GetRegisteredMappersList();
+        return mapper_list.find(rMapperName) != mapper_list.end();
+    }
+
+    static std::vector<std::string> GetRegisteredMapperNames()
+    {
+        const auto& mapper_list = GetRegisteredMappersList();
+
+        std::vector<std::string> mapper_names;
+
+        for (auto const& r_registered_mapper : mapper_list) {
+            mapper_names.push_back(r_registered_mapper.first);
+        }
+
+        return mapper_names;
+    }
 
     ///@}
     ///@name Input and output
@@ -124,67 +146,9 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const {}
 
-
-    ///@}
-    ///@name Friends
-    ///@{
-
-
-    ///@}
-
-protected:
-    ///@name Protected static Member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Protected member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Protected Operators
-    ///@{
-
-
-    ///@}
-    ///@name Protected Operations
-    ///@{
-
-
-    ///@}
-    ///@name Protected  Access
-    ///@{
-
-
-    ///@}
-    ///@name Protected Inquiry
-    ///@{
-
-
-    ///@}
-    ///@name Protected LifeCycle
-    ///@{
-
-
     ///@}
 
 private:
-    ///@name Static Member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Private Operators
-    ///@{
-
-
-    ///@}
     ///@name Private Operations
     ///@{
 
@@ -193,63 +157,49 @@ private:
 
     static ModelPart& ReadInterfaceModelPart(ModelPart& rModelPart,
                                              Parameters InterfaceParameters,
-                                             const std::string& InterfaceSide);
+                                             const std::string& InterfaceSide)
+    {
+        int echo_level = 0;
+        // read the echo_level temporarily, bcs the mJsonParameters have not yet been validated and defaults assigned
+        if (InterfaceParameters.Has("echo_level"))
+        {
+            echo_level = std::max(echo_level, InterfaceParameters["echo_level"].GetInt());
+        }
 
-    static std::unordered_map<std::string, Mapper::Pointer>& GetRegisteredMappersList();
+        int comm_rank = rModelPart.GetCommunicator().MyPID();
 
-    ///@}
-    ///@name Private  Access
-    ///@{
+        std::string key_sub_model_part = "interface_submodel_part_";
+        key_sub_model_part.append(InterfaceSide);
 
+        if (InterfaceParameters.Has(key_sub_model_part))
+        {
+            const std::string name_interface_submodel_part = InterfaceParameters[key_sub_model_part].GetString();
 
-    ///@}
-    ///@name Private Inquiry
-    ///@{s
+            if (echo_level >= 3 && comm_rank == 0)
+            {
+                std::cout << "Mapper: SubModelPart used for " << InterfaceSide << "-ModelPart" << std::endl;
+            }
 
+            return rModelPart.GetSubModelPart(name_interface_submodel_part);
+        }
+        else
+        {
+            if (echo_level >= 3 && comm_rank == 0)
+            {
+                std::cout << "Mapper: Main ModelPart used for " << InterfaceSide << "-ModelPart" << std::endl;
+            }
 
-    ///@}
-    ///@name Un accessible methods
-    ///@{
+            return rModelPart;
+        }
+    }
 
-    /// Assignment operator.
-    MapperFactory& operator=(MapperFactory const& rOther);
-
-    //   /// Copy constructor.
-    //   MapperFactory(MapperFactory const& rOther){}
-
+    static std::unordered_map<std::string, typename Mapper<TSparseSpace,
+        TDenseSpace>::Pointer>& GetRegisteredMappersList();
 
     ///@}
 
 }; // Class MapperFactory
 
-///@}
-
-///@name Type Definitions
-///@{
-
-
-///@}
-///@name Input and output
-///@{
-
-
-/// input stream function
-inline std::istream& operator >> (std::istream& rIStream,
-                                  MapperFactory& rThis)
-{
-    return rIStream;
-}
-
-/// output stream function
-inline std::ostream& operator << (std::ostream& rOStream,
-                                  const MapperFactory& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 ///@} addtogroup block
