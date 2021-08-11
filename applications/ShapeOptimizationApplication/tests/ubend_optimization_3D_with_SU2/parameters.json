@@ -1,0 +1,86 @@
+{
+    "su2_interface_settings" : {
+        "su2_related": {
+            "config_file"                 : "ubend_flow.cfg",
+            "number_of_cores"             : 8,
+            "gradient_method"             : "DISCRETE_ADJOINT",
+            "write_frequency_adjoint_run" : 250,
+            "mesh_file"                   : "ubend.su2",
+            "mesh_motion_file"            : "mesh_motion.dat",
+            "use_restart_in_adjoint_run"  : "NO",
+            "design_surface_tag"          : "BOGEN"
+        },
+        "kratos_related": {
+            "mdpa_file"      : "ubend.mdpa",
+            "write_elements" : false
+        },
+        "echo_level" : 2
+    },
+    "optimization_settings" : {
+        "model_settings" : {
+            "domain_size"           : 3,
+            "model_part_name"       : "ubend",
+            "model_import_settings" : {
+                "input_type"     : "mdpa",
+                "input_filename" : "ubend"
+            },
+            "design_surface_sub_model_part_name" : "BOGEN",
+            "damping" : {
+                "apply_damping"      : true,
+                "max_neighbor_nodes" : 50000,
+                "damping_regions" : [{
+                        "sub_model_part_name"   : "fix_nodes",
+                        "damp_X"                : true,
+                        "damp_Y"                : true,
+                        "damp_Z"                : true,
+                        "damping_function_type" : "cosine",
+                        "damping_radius"        : 0.06
+                    }]
+            },
+            "mesh_motion" : {
+                "apply_mesh_solver" : false,
+                "boundary_conditions_process_list" : []
+            }
+        },
+        "objectives" : [{
+                "identifier" : "pressure_loss",
+                "type"       : "minimization",
+                "project_gradient_on_surface_normals" : false
+        }],
+        "constraints" : [],
+        "design_variables" : {
+            "type"                : "vertex_morphing",
+            "filter" : {
+                "filter_function_type"       : "linear",
+                "filter_radius"              : 0.03,
+                "max_nodes_in_filter_radius" : 50000,
+                "matrix_free_filtering"      : true
+            }
+        },
+        "optimization_algorithm" : {
+            "name"                    : "steepest_descent",
+            "max_iterations"          : 100,
+            "relative_tolerance"      : -1e-0,
+            "line_search" : {
+                "line_search_type"           : "adaptive_stepping",
+                "normalize_search_direction" : true,
+                "step_size"                  : 0.0015
+            }
+        },
+        "output" : {
+            "output_directory"        : "Optimization_Results",
+            "design_output_mode" : "WriteDesignSurface",
+            "nodal_results"      : [ "NORMALIZED_SURFACE_NORMAL",
+                                     "DF1DX",
+                                     "DF1DX_MAPPED",
+                                     "CONTROL_POINT_UPDATE",
+                                     "CONTROL_POINT_CHANGE",
+                                     "SHAPE_UPDATE",
+                                     "SHAPE_CHANGE",
+                                     "MESH_CHANGE" ],
+            "output_format" : {
+                "name": "vtk"
+            }
+        }
+    }
+}

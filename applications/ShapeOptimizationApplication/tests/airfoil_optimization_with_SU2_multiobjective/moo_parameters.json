@@ -1,0 +1,17 @@
+{
+    "moo_settings": {
+        "objectives" : [{
+            "identifier" : "drag", 
+            "type"       : "minimization",
+            "project_gradient_on_surface_normals" : false,
+            "marker" : "airfoil"
+        },{
+            "identifier" : "lift",
+            "type"       : "maximization",
+            "project_gradient_on_surface_normals" : false,
+            "marker" : "airfoil"
+        }],
+        "constraints" : [],
+        "numsteps" : 5 
+    }
+}
